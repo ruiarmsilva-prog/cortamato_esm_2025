@@ -3,6 +3,8 @@ import pandas as pd
 import qrcode
 from io import BytesIO
 from datetime import datetime
+from datetime import datetime, date
+import os
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
@@ -48,7 +50,12 @@ df = load_data()
 if menu == "Nova Inscrição":
     with st.form("inscricao_form"):
         nome = st.text_input("Nome do aluno")
-        data_nasc = st.date_input("Data de nascimento")
+        data_nasc = st.date_input(
+            "Data de nascimento",
+            value=date(2010,1,1),             # valor default
+            min_value=date(2004,1,1),        # mínimo permitido
+            max_value=date(2017,12,31)       # máximo permitido
+        )
         genero = st.selectbox("Género", ["Masculino", "Feminino"])
         submeter = st.form_submit_button("Inscrever")
 
