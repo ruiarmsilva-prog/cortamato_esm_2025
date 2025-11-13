@@ -92,8 +92,4 @@ elif menu == "Classificações":
     if st.button("Registar tempo"):
         df.loc[df["Nome"] == nome, "Tempo"] = tempo
         df.to_csv(DATA_FILE, index=False)
-<<<<<<< HEAD
         st.success(f"Tempo registado para {nome}: {tempo}")
-=======
-        st.success(f"Tempo registado para {nome}: {tempo}")
->>>>>>> 616993f545e62a2139bb8293e29b151278d2c5b4
