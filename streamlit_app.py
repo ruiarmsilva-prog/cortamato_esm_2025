@@ -2,33 +2,37 @@ import streamlit as st
 import pandas as pd
 import qrcode
 from io import BytesIO
-from datetime import datetime
 from datetime import datetime, date
 import os
+import openpyxl
+
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
 DATA_FILE = "data/inscricoes.csv"
+DORSAL_DIR = "data/dorsais"
 
 # --- Função para carregar dados ---
+@st.cache_data
 def load_data():
-    try:
-        return pd.read_csv(DATA_FILE)
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["Nome", "Data de Nascimento", "Género", "Escalão", "Número", "QR"])
+    df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
+    df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], format="%d-%m-%Y")
+    df["Processo"] = df["Processo"].astype(int)
+    return df
 
 # --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
-    dn = datetime.strptime(data_nascimento, "%Y-%m-%d")
-    if datetime(2015,1,1) <= dn <= datetime(2017,12,31):
+    if isinstance(data_nascimento, str):
+        data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d")
+    if datetime(2015,1,1) <= data_nascimento <= datetime(2017,12,31):
         return "Infantil A"
-    elif datetime(2013,1,1) <= dn <= datetime(2014,12,31):
+    elif datetime(2013,1,1) <= data_nascimento <= datetime(2014,12,31):
         return "Infantil B"
-    elif datetime(2011,1,1) <= dn <= datetime(2012,12,31):
+    elif datetime(2011,1,1) <= data_nascimento <= datetime(2012,12,31):
         return "Iniciado"
-    elif datetime(2008,1,1) <= dn <= datetime(2010,12,31):
+    elif datetime(2008,1,1) <= data_nascimento <= datetime(2010,12,31):
         return "Juvenil"
-    elif datetime(2004,1,1) <= dn <= datetime(2007,12,31):
+    elif datetime(2004,1,1) <= data_nascimento <= datetime(2007,12,31):
         return "Júnior"
     else:
         return "Fora de escalão"
@@ -50,27 +54,23 @@ df = load_data()
 if menu == "Nova Inscrição":
     with st.form("inscricao_form"):
         nome = st.text_input("Nome do aluno")
-        data_nasc = st.date_input(
-            "Data de nascimento",
-            value=date(2010,1,1),             # valor default
-            min_value=date(2004,1,1),        # mínimo permitido
-            max_value=date(2017,12,31)       # máximo permitido
-        )
+        data_nasc = st.date_input("Data de nascimento", value=date(2010,1,1), min_value=date(2004,1,1), max_value=date(2017,12,31))
         genero = st.selectbox("Género", ["Masculino", "Feminino"])
+        turma = st.text_input("Turma")
         submeter = st.form_submit_button("Inscrever")
 
     if submeter:
-        escalão = get_escalão(data_nasc.strftime("%Y-%m-%d"))
-        numero = len(df) + 1
+        escalão = get_escalão(data_nasc)
+        numero = df["Processo"].max() + 1 if not df.empty else 1
         qr_img = gerar_qr(numero, nome)
 
-        # Guarda QR como ficheiro
-        qr_path = f"data/dorsais/{numero}.png"
+        os.makedirs(DORSAL_DIR, exist_ok=True)
+        qr_path = f"{DORSAL_DIR}/{numero}.png"
         with open(qr_path, "wb") as f:
             f.write(qr_img)
 
-        novo = pd.DataFrame([[nome, data_nasc, genero, escalão, numero, qr_path]],
-                            columns=df.columns)
+        novo = pd.DataFrame([[numero, nome, data_nasc, genero, turma, escalão, "", qr_path]],
+                            columns=["Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"])
         df = pd.concat([df, novo], ignore_index=True)
         df.to_csv(DATA_FILE, index=False)
         st.success(f"✅ {nome} inscrito com sucesso! (Nº {numero}, {escalão})")
@@ -78,8 +78,33 @@ if menu == "Nova Inscrição":
 
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
-    st.dataframe(df)
 
+    processo = st.text_input("🔍 Pesquisar por número de processo")
+    if processo:
+        try:
+            processo = int(processo)
+            aluno = df[df["Processo"] == processo]
+            if not aluno.empty:
+                dados = aluno.iloc[0]
+                st.success(f"✅ Aluno encontrado: {dados['Nome']}")
+                st.write(f"📅 Data de nascimento: {dados['Data nascimento'].strftime('%d-%m-%Y')}")
+                st.write(f"🏫 Turma: {dados['Turma']}")
+                st.write(f"🎽 Escalão: {dados['Escalão']}")
+                st.write(f"👤 Sexo: {dados['Género']}")
+
+                if st.button("🖨️ Imprimir Dorsal"):
+                    st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
+
+                if st.button("❌ Eliminar inscrição"):
+                    df = df[df["Processo"] != processo]
+                    df.to_csv(DATA_FILE, index=False)
+                    st.warning(f"Inscrição de {dados['Nome']} eliminada.")
+            else:
+                st.error("❌ Processo não encontrado.")
+        except ValueError:
+            st.error("⚠️ Introduz um número de processo válido.")
+
+    st.dataframe(df)
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
