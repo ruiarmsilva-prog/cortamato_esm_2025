@@ -4,8 +4,6 @@ import qrcode
 from io import BytesIO
 from datetime import datetime, date
 import os
-import openpyxl
-
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
@@ -16,7 +14,12 @@ DORSAL_DIR = "data/dorsais"
 @st.cache_data
 def load_data():
     df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
-    df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], format="%d-%m-%Y")
+    df.columns = df.columns.str.strip()  # remove espaços extras
+    st.write("🧾 Colunas encontradas no ficheiro:", df.columns.tolist())
+    if "Data nascimento" in df.columns:
+        df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], errors="coerce")
+    else:
+        st.error("❌ A coluna 'Data nascimento' não foi encontrada.")
     df["Processo"] = df["Processo"].astype(int)
     return df
 
