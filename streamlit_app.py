@@ -15,13 +15,19 @@ DORSAL_DIR = "data/dorsais"
 def load_data():
     df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
     df.columns = df.columns.str.strip()  # remove espaços extras
-    st.write("🧾 Colunas encontradas no ficheiro:", df.columns.tolist())
-    if "Data nascimento" in df.columns:
-        df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], errors="coerce")
-    else:
-        st.error("❌ A coluna 'Data nascimento' não foi encontrada.")
+    st.write("🧾 Colunas encontradas:", df.columns.tolist())
+
+    # Verifica se colunas essenciais existem
+    colunas_esperadas = ["Processo", "Nome", "Data nascimento", "Género", "Turma"]
+    for col in colunas_esperadas:
+        if col not in df.columns:
+            st.error(f"❌ A coluna obrigatória '{col}' não foi encontrada.")
+            st.stop()
+
+    df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], errors="coerce")
     df["Processo"] = df["Processo"].astype(int)
     return df
+
 
 # --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
