@@ -185,7 +185,7 @@ if menu == "Nova Inscrição":
                     st.warning("⚠️ Este aluno já está inscrito.")
                 else:
                     if st.button("✅ Confirmar inscrição"):
-                        dorsal_img = gerar_dorsal_a6(dados["nome"], processo, escalão)
+                        dorsal_img = gerar_dorsal_a6(dados["nome"], processo, escalão, turma)
                         os.makedirs(DORSAL_DIR, exist_ok=True)
                         qr_path = f"{DORSAL_DIR}/{processo}.png"
                         with open(qr_path, "wb") as f:
