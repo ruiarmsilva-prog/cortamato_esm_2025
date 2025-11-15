@@ -82,7 +82,7 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     # Nome (linha 2) — só se existir
     if nome_linha2:
         draw.text(
-            (center_x, linha1_y + 120),
+            (center_x, linha1_y + 80),
             nome_linha2,
             fill="black",
             font=font_name,
