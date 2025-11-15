@@ -48,10 +48,10 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     FONT_MAIN = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
-    font_name  = ImageFont.truetype(FONT_BOLD, 120)
-    font_proc  = ImageFont.truetype(FONT_BOLD, 140)
-    font_esc   = ImageFont.truetype(FONT_BOLD, 110)
-    font_turma = ImageFont.truetype(FONT_MAIN, 95)
+    font_name  = ImageFont.truetype(FONT_BOLD, 80)
+    font_proc  = ImageFont.truetype(FONT_BOLD, 80)
+    font_esc   = ImageFont.truetype(FONT_BOLD, 80)
+    font_turma = ImageFont.truetype(FONT_MAIN, 80)
 
     # Espaçamentos
     linha1_y = bottom_y + 120  # Nome
