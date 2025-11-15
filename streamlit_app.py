@@ -146,7 +146,7 @@ elif menu == "Lista de Inscritos":
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
-    st.dataframe(inscritos)
+    st.dataframe(inscritos.drop(columns=["Tempo"], errors="ignore"))    
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
