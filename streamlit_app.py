@@ -323,12 +323,16 @@ elif menu == "Lista de Inscritos (admin)":
 
 # --- Menu: Chegadas ---
 elif menu == "Chegadas":
+    if not acesso_admin:
+        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
+        st.stop()
 
     st.subheader("🏁 Registo de Chegadas")
 
-    # Carregar inscrições
+    # Carregar inscrições como string para evitar NaN
     if os.path.exists(DATA_FILE):
-        inscritos = pd.read_csv(DATA_FILE)
+        inscritos = pd.read_csv(DATA_FILE, dtype=str)
+        inscritos = inscritos.fillna("")
     else:
         st.error("❌ Não há inscrições registadas.")
         st.stop()
@@ -345,7 +349,7 @@ elif menu == "Chegadas":
 
     if chegada:
         try:
-            processo = int(chegada)
+            processo = str(int(chegada))
             aluno = inscritos[inscritos["Processo"] == processo]
 
             if aluno.empty:
@@ -353,19 +357,20 @@ elif menu == "Chegadas":
             else:
                 nome = aluno.iloc[0]["Nome"]
 
-                # Já está classificado?
+                # Verificar se já está classificado
                 if aluno.iloc[0]["Classificação"] != "":
                     pos = aluno.iloc[0]["Classificação"]
                     hora = aluno.iloc[0]["Hora"]
                     st.warning(f"⚠️ {nome} já foi registado: {pos}º lugar às {hora}.")
                 else:
-                    # Calcular posição
+                    # Contar classificados existentes
                     posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
-                    
+
                     # Registar
                     hora_agora = datetime.now().strftime("%H:%M:%S")
-                    inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = posicao
+                    inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = str(posicao)
                     inscritos.loc[inscritos["Processo"] == processo, "Hora"] = hora_agora
+
                     inscritos.to_csv(DATA_FILE, index=False)
 
                     st.success(f"🏁 {nome} classificado em {posicao}º lugar!")
@@ -375,9 +380,13 @@ elif menu == "Chegadas":
             st.error("⚠️ Parâmetro inválido.")
 
     # Mostrar tabela de classificados
-    classificados = inscritos[inscritos["Classificação"] != ""].sort_values("Classificação")
+    classificados = inscritos[inscritos["Classificação"] != ""].copy()
+    classificados["Classificação"] = classificados["Classificação"].astype(int)
+    classificados = classificados.sort_values("Classificação")
+
     st.subheader("📊 Classificação geral")
     st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
+
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
