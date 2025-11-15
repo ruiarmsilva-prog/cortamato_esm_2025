@@ -81,6 +81,7 @@ if menu == "Nova Inscrição":
                 with st.expander("📋 Dados do aluno"):
                     st.markdown(f"**Nome:** {dados['nome']}")
                     st.markdown(f"**Data de nascimento:** {dados['data_nascimento'].strftime('%d-%m-%Y')}")
+                    st.markdown(f"**CC:** {dados['CC']}")
                     st.markdown(f"**Turma:** {dados['turma']}")
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
