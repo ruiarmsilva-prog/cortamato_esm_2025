@@ -323,10 +323,6 @@ elif menu == "Lista de Inscritos (admin)":
 
 # --- Menu: Chegadas ---
 elif menu == "Chegadas":
-    if not acesso_admin:
-        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
-        st.stop()
-
     st.subheader("🏁 Registo de Chegadas")
 
     # Carregar inscrições como string para evitar NaN
@@ -390,6 +386,10 @@ elif menu == "Chegadas":
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
+    if not acesso_admin:
+        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
+        st.stop()
+
     st.subheader("🏁 Classificações por Escalão e Género")
 
     if os.path.exists(DATA_FILE):
