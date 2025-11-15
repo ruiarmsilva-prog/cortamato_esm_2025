@@ -158,7 +158,7 @@ elif menu == "Lista de Inscritos":
 
 # --- Menu: Lista de Inscritos ---
 elif menu == "Lista de Inscritos (admin)":
-    st.subheader("📋 Lista de Inscrições")
+    st.subheader("📋 Lista de Inscrições (Admin)")
     if os.path.exists(DATA_FILE):
         inscritos = pd.read_csv(DATA_FILE)
     else:
@@ -166,7 +166,8 @@ elif menu == "Lista de Inscritos (admin)":
             "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
         ])
 
-    processo = st.text_input("🔍 Pesquisar por número de processo")
+    # 🔍 Eliminar inscrição por processo
+    processo = st.text_input("🔍 Eliminar inscrição por número de processo")
     if processo:
         try:
             processo = int(processo)
@@ -179,10 +180,7 @@ elif menu == "Lista de Inscritos (admin)":
                 st.write(f"🎽 Escalão: {dados['Escalão']}")
                 st.write(f"👤 Sexo: {dados['Género']}")
 
-                if st.button("🖨️ Imprimir Dorsal"):
-                    st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
-
-                if acesso_admin and st.button("❌ Eliminar inscrição"):
+                if st.button("❌ Confirmar eliminação"):
                     inscritos = inscritos[inscritos["Processo"] != processo]
                     inscritos.to_csv(DATA_FILE, index=False)
                     st.warning(f"Inscrição de {dados['Nome']} eliminada.")
@@ -191,7 +189,30 @@ elif menu == "Lista de Inscritos (admin)":
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
-    st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
+    # 🧹 Limpar todas as inscrições
+    if st.button("🧹 Apagar todas as inscrições"):
+        if os.path.exists(DATA_FILE):
+            os.remove(DATA_FILE)
+            st.success("✅ Todas as inscrições foram apagadas.")
+        else:
+            st.info("ℹ️ Nenhuma inscrição encontrada.")
+
+    # ⬇️ Download dos dorsais em ZIP
+    if st.button("⬇️ Download dos dorsais (ZIP)"):
+        import zipfile
+        import tempfile
+
+        zip_path = os.path.join(tempfile.gettempdir(), "dorsais.zip")
+        with zipfile.ZipFile(zip_path, "w") as zipf:
+            for _, row in inscritos.iterrows():
+                qr_path = row["QR"]
+                if os.path.exists(qr_path):
+                    zipf.write(qr_path, arcname=os.path.basename(qr_path))
+        with open(zip_path, "rb") as f:
+            st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
+
+    # 📋 Mostrar tabela
+    st.dataframe(inscritos.drop(columns=["QR"], errors="ignore"))
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
