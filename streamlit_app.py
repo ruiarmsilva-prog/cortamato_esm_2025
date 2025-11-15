@@ -156,6 +156,44 @@ elif menu == "Lista de Inscritos":
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
+elif menu == "Lista de Inscritos (admin)":
+    st.subheader("📋 Lista de Inscrições")
+    if os.path.exists(DATA_FILE):
+        inscritos = pd.read_csv(DATA_FILE)
+    else:
+        inscritos = pd.DataFrame(columns=[
+            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+        ])
+
+    processo = st.text_input("🔍 Pesquisar por número de processo")
+    if processo:
+        try:
+            processo = int(processo)
+            aluno = inscritos[inscritos["Processo"] == processo]
+            if not aluno.empty:
+                dados = aluno.iloc[0]
+                st.success(f"✅ Aluno encontrado: {dados['Nome']}")
+                st.write(f"📅 Data de nascimento: {dados['Data nascimento']}")
+                st.write(f"🏫 Turma: {dados['Turma']}")
+                st.write(f"🎽 Escalão: {dados['Escalão']}")
+                st.write(f"👤 Sexo: {dados['Género']}")
+
+                if st.button("🖨️ Imprimir Dorsal"):
+                    st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
+
+                if acesso_admin and st.button("❌ Eliminar inscrição"):
+                    inscritos = inscritos[inscritos["Processo"] != processo]
+                    inscritos.to_csv(DATA_FILE, index=False)
+                    st.warning(f"Inscrição de {dados['Nome']} eliminada.")
+            else:
+                st.error("❌ Processo não encontrado.")
+        except ValueError:
+            st.error("⚠️ Introduz um número de processo válido.")
+
+    st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
+    csv = inscritos.to_csv(index=False).encode('utf-8')
+    st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
+
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
     if not acesso_admin:
