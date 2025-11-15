@@ -390,10 +390,6 @@ elif menu == "Chegadas":
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
-    if not acesso_admin:
-        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
-        st.stop()
-
     st.subheader("🏁 Classificações por Escalão e Género")
 
     if os.path.exists(DATA_FILE):
