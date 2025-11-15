@@ -21,35 +21,34 @@ def gerar_dorsal_a6(nome, processo, escalao):
     dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
     draw = ImageDraw.Draw(dorsal)
 
-    # QR ocupa metade superior inteira
+    # QR code ocupa metade superior
     qr_size = A6_HEIGHT // 2
     url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
-
     qr_img = qrcode.make(url)
     qr_img = qr_img.resize((qr_size, qr_size))
-
     qr_x = (A6_WIDTH - qr_size) // 2
     dorsal.paste(qr_img, (qr_x, 0))
 
+    # Texto na metade inferior
     bottom_y = qr_size
 
-    # Fonte grande para preencher metade inferior
     try:
-        font_body = ImageFont.truetype("arial.ttf", 200)
+        font_name = ImageFont.truetype("arial.ttf", 100)  # Nome e Processo
+        font_esc = ImageFont.truetype("arial.ttf", 100)   # Escalão
     except:
-        font_body = ImageFont.load_default()
+        font_name = ImageFont.load_default()
+        font_esc = ImageFont.load_default()
 
-    # Colunas
     col_width = A6_WIDTH // 2
-    left_center = col_width // 2
-    right_center = col_width + col_width // 2
+    left_center_x = col_width // 2
+    right_center_x = col_width + col_width // 2
 
-    # Nome + Processo na coluna esquerda
-    draw.text((left_center, bottom_y + 50), f"{nome}", fill="black", font=font_body, anchor="mm")
-    draw.text((left_center, bottom_y + 400), f"{processo}", fill="black", font=font_body, anchor="mm")
+    # Nome e Processo na coluna esquerda
+    draw.text((left_center_x, bottom_y + 50), nome, fill="black", font=font_name, anchor="mm")
+    draw.text((left_center_x, bottom_y + 200), str(processo), fill="black", font=font_name, anchor="mm")
 
     # Escalão na coluna direita
-    draw.text((right_center, bottom_y + 200), f"{escalao}", fill="black", font=font_body, anchor="mm")
+    draw.text((right_center_x, bottom_y + 125), escalao, fill="black", font=font_esc, anchor="mm")
 
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
