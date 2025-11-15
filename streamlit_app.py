@@ -10,12 +10,27 @@ st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
 
+# --- Autenticação simples ---
+def autenticar():
+    senha = st.sidebar.text_input("🔒 Palavra-passe (admin)", type="password")
+    if senha == "admin123":
+        return True
+    elif senha:
+        st.sidebar.warning("Senha incorreta.")
+    return False
+
+acesso_admin = autenticar()
+
+# --- Menu condicionado por permissões ---
+if acesso_admin:
+    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Classificações"])
+else:
+    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos"])
+
 # --- Função para carregar dados ---
 @st.cache_data
 def load_data():
     df_raw = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0, header=0)
-
-    # Extrair colunas por índice
     df = pd.DataFrame()
     df["processo"] = pd.to_numeric(df_raw.iloc[:, 0], errors="coerce")
     df["nome"] = df_raw.iloc[:, 1].astype(str).str.strip()
@@ -23,13 +38,9 @@ def load_data():
     df["data_nascimento"] = pd.to_datetime(df_raw.iloc[:, 3], errors="coerce")
     df["CC"] = df_raw.iloc[:, 4].astype(str).str.strip()
     df["turma"] = df_raw.iloc[:, 5].astype(str).str.strip()
-
-    # Remover registos inválidos
     df = df[df["processo"].notnull()]
     df["processo"] = df["processo"].astype("Int64")
-
     return df
-
 
 # --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
@@ -55,16 +66,12 @@ def gerar_qr(numero, nome):
     qr.save(buf, format="PNG")
     return buf.getvalue()
 
-# --- Interface ---
-st.title("🏃‍♂️ Corta-Mato ESM — Sistema de Inscrições")
-
-menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Classificações"])
-
+# --- Carregar base de dados de alunos ---
 df = load_data()
 
+# --- Menu: Nova Inscrição ---
 if menu == "Nova Inscrição":
     st.subheader("🆕 Nova Inscrição")
-
     processo_input = st.text_input("Número de processo do aluno")
     aluno_base = None
 
@@ -110,10 +117,9 @@ if menu == "Nova Inscrição":
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
+# --- Menu: Lista de Inscritos ---
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
-
-    # Carregar apenas os alunos inscritos
     if os.path.exists(DATA_FILE):
         inscritos = pd.read_csv(DATA_FILE)
     else:
@@ -137,7 +143,7 @@ elif menu == "Lista de Inscritos":
                 if st.button("🖨️ Imprimir Dorsal"):
                     st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
 
-                if st.button("❌ Eliminar inscrição"):
+                if acesso_admin and st.button("❌ Eliminar inscrição"):
                     inscritos = inscritos[inscritos["Processo"] != processo]
                     inscritos.to_csv(DATA_FILE, index=False)
                     st.warning(f"Inscrição de {dados['Nome']} eliminada.")
@@ -146,24 +152,36 @@ elif menu == "Lista de Inscritos":
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
-    st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))    
+    st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
+# --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
+    if not acesso_admin:
+        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
+        st.stop()
+
     st.subheader("🏁 Classificações por Escalão e Género")
 
-    if "Tempo" not in df.columns:
-        df["Tempo"] = ""
+    if os.path.exists(DATA_FILE):
+        inscritos = pd.read_csv(DATA_FILE)
+    else:
+        inscritos = pd.DataFrame(columns=[
+            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+        ])
 
-    op = st.selectbox("Escolher escalão", sorted(df["Escalão"].unique()))
-    filtro = df[df["Escalão"] == op]
+    if "Tempo" not in inscritos.columns:
+        inscritos["Tempo"] = ""
+
+    op = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
+    filtro = inscritos[inscritos["Escalão"] == op]
     st.write(f"Inscritos no escalão {op}:")
     st.dataframe(filtro)
 
     nome = st.selectbox("Adicionar tempo a:", filtro["Nome"])
     tempo = st.text_input("Tempo (ex: 00:12:45)")
     if st.button("Registar tempo"):
-        df.loc[df["Nome"] == nome, "Tempo"] = tempo
-        df.to_csv(DATA_FILE, index=False)
+        inscritos.loc[inscritos["Nome"] == nome, "Tempo"] = tempo
+        inscritos.to_csv(DATA_FILE, index=False)
         st.success(f"Tempo registado para {nome}: {tempo}")
