@@ -64,32 +64,34 @@ df = load_data()
 if menu == "Nova Inscrição":
     st.subheader("🆕 Nova Inscrição")
 
-    processo = st.text_input("Número de processo do aluno")
+    processo_input = st.text_input("Número de processo do aluno")
     aluno_base = None
 
-    if processo:
+    if processo_input:
         try:
-            processo = int(processo)
+            processo = int(processo_input)
             aluno_base = df[df["processo"] == processo]
             if aluno_base.empty:
                 st.error("❌ Processo não encontrado na base de dados.")
             else:
                 dados = aluno_base.iloc[0]
-                st.success(f"✅ Aluno encontrado: {dados['nome']}")
-                st.write(f"📅 Data de nascimento: {dados['data_nascimento'].strftime('%d-%m-%Y')}")
-                st.write(f"🏫 Turma: {dados['turma']}")
-                st.write(f"👤 Género: {dados['género']}")
                 escalão = get_escalão(dados["data_nascimento"])
-                st.write(f"🎽 Escalão: {escalão}")
 
-                if st.button("Confirmar inscrição"):
-                    inscricoes = pd.read_csv(DATA_FILE) if os.path.exists(DATA_FILE) else pd.DataFrame(columns=[
-                        "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
-                    ])
+                with st.expander("📋 Dados do aluno"):
+                    st.markdown(f"**Nome:** {dados['nome']}")
+                    st.markdown(f"**Data de nascimento:** {dados['data_nascimento'].strftime('%d-%m-%Y')}")
+                    st.markdown(f"**Turma:** {dados['turma']}")
+                    st.markdown(f"**Género:** {dados['género']}")
+                    st.markdown(f"**Escalão:** {escalão}")
 
-                    if processo in inscricoes["Processo"].values:
-                        st.warning("⚠️ Este aluno já está inscrito.")
-                    else:
+                inscricoes = pd.read_csv(DATA_FILE) if os.path.exists(DATA_FILE) else pd.DataFrame(columns=[
+                    "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+                ])
+
+                if processo in inscricoes["Processo"].values:
+                    st.warning("⚠️ Este aluno já está inscrito.")
+                else:
+                    if st.button("✅ Confirmar inscrição"):
                         qr_img = gerar_qr(processo, dados["nome"])
                         os.makedirs(DORSAL_DIR, exist_ok=True)
                         qr_path = f"{DORSAL_DIR}/{processo}.png"
