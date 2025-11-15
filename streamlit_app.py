@@ -231,9 +231,6 @@ elif menu == "Classificações":
             "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", 
         ])
 
-    if "Tempo" not in inscritos.columns:
-        inscritos["Tempo"] = ""
-
     op = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
     filtro = inscritos[inscritos["Escalão"] == op]
     st.write(f"Inscritos no escalão {op}:")
