@@ -62,29 +62,49 @@ menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Clas
 df = load_data()
 
 if menu == "Nova Inscrição":
-    with st.form("inscricao_form"):
-        nome = st.text_input("Nome do aluno")
-        data_nasc = st.date_input("Data de nascimento", value=date(2010,1,1), min_value=date(2004,1,1), max_value=date(2017,12,31))
-        genero = st.selectbox("Género", ["Masculino", "Feminino"])
-        turma = st.text_input("Turma")
-        submeter = st.form_submit_button("Inscrever")
+    st.subheader("🆕 Nova Inscrição")
 
-    if submeter:
-        escalão = get_escalão(data_nasc)
-        numero = df["Processo"].max() + 1 if not df.empty else 1
-        qr_img = gerar_qr(numero, nome)
+    processo = st.text_input("Número de processo do aluno")
+    aluno_base = None
 
-        os.makedirs(DORSAL_DIR, exist_ok=True)
-        qr_path = f"{DORSAL_DIR}/{numero}.png"
-        with open(qr_path, "wb") as f:
-            f.write(qr_img)
+    if processo:
+        try:
+            processo = int(processo)
+            aluno_base = df[df["processo"] == processo]
+            if aluno_base.empty:
+                st.error("❌ Processo não encontrado na base de dados.")
+            else:
+                dados = aluno_base.iloc[0]
+                st.success(f"✅ Aluno encontrado: {dados['nome']}")
+                st.write(f"📅 Data de nascimento: {dados['data_nascimento'].strftime('%d-%m-%Y')}")
+                st.write(f"🏫 Turma: {dados['turma']}")
+                st.write(f"👤 Género: {dados['género']}")
+                escalão = get_escalão(dados["data_nascimento"])
+                st.write(f"🎽 Escalão: {escalão}")
 
-        novo = pd.DataFrame([[numero, nome, data_nasc, genero, turma, escalão, "", qr_path]],
-                            columns=["Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"])
-        df = pd.concat([df, novo], ignore_index=True)
-        df.to_csv(DATA_FILE, index=False)
-        st.success(f"✅ {nome} inscrito com sucesso! (Nº {numero}, {escalão})")
-        st.image(qr_img, width=150)
+                if st.button("Confirmar inscrição"):
+                    inscricoes = pd.read_csv(DATA_FILE) if os.path.exists(DATA_FILE) else pd.DataFrame(columns=[
+                        "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+                    ])
+
+                    if processo in inscricoes["Processo"].values:
+                        st.warning("⚠️ Este aluno já está inscrito.")
+                    else:
+                        qr_img = gerar_qr(processo, dados["nome"])
+                        os.makedirs(DORSAL_DIR, exist_ok=True)
+                        qr_path = f"{DORSAL_DIR}/{processo}.png"
+                        with open(qr_path, "wb") as f:
+                            f.write(qr_img)
+
+                        novo = pd.DataFrame([[processo, dados["nome"], dados["data_nascimento"], dados["género"],
+                                              dados["turma"], escalão, "", qr_path]],
+                                            columns=inscricoes.columns)
+                        inscricoes = pd.concat([inscricoes, novo], ignore_index=True)
+                        inscricoes.to_csv(DATA_FILE, index=False)
+                        st.success(f"✅ {dados['nome']} inscrito com sucesso!")
+                        st.image(qr_img, width=150)
+        except ValueError:
+            st.error("⚠️ Introduz um número de processo válido.")
 
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
