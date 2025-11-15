@@ -54,7 +54,7 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     font_turma = ImageFont.truetype(FONT_MAIN, 60)
 
     # Espaçamentos
-    linha1_y = bottom_y + 80  # Nome
+    linha1_y = bottom_y + 40  # Nome
     linha2_y = bottom_y + 220  # Processo
     linha3_y = bottom_y + 380  # Escalão
     linha4_y = bottom_y + 520  # Turma
