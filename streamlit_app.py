@@ -156,7 +156,7 @@ elif menu == "Lista de Inscritos":
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
-# --- Menu: Lista de Inscritos ---
+# --- Menu: Lista de Inscritos (admin) ---
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições (Admin)")
     if os.path.exists(DATA_FILE):
@@ -216,7 +216,6 @@ elif menu == "Lista de Inscritos (admin)":
         with open(zip_path, "rb") as f:
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
 
-
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
     if not acesso_admin:
@@ -229,7 +228,7 @@ elif menu == "Classificações":
         inscritos = pd.read_csv(DATA_FILE)
     else:
         inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", 
         ])
 
     if "Tempo" not in inscritos.columns:
