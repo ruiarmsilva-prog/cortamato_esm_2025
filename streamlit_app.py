@@ -55,9 +55,9 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
 
     # Espaçamentos
     linha1_y = bottom_y + 40  # Nome
-    linha2_y = bottom_y + 220  # Processo
-    linha3_y = bottom_y + 380  # Escalão
-    linha4_y = bottom_y + 520  # Turma
+    linha2_y = bottom_y + 250  # Processo
+    linha3_y = bottom_y + 350  # Escalão
+    linha4_y = bottom_y + 450  # Turma
 
     # --- Dividir nome longo ---
     partes_nome = nome.split()
