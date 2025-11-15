@@ -48,16 +48,16 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     FONT_MAIN = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
-    font_name  = ImageFont.truetype(FONT_BOLD, 80)
-    font_proc  = ImageFont.truetype(FONT_BOLD, 80)
-    font_esc   = ImageFont.truetype(FONT_BOLD, 80)
-    font_turma = ImageFont.truetype(FONT_MAIN, 80)
+    font_name  = ImageFont.truetype(FONT_MAIN, 60)
+    font_proc  = ImageFont.truetype(FONT_MAIN, 60)
+    font_esc   = ImageFont.truetype(FONT_MAIN, 60)
+    font_turma = ImageFont.truetype(FONT_MAIN, 60)
 
     # Espaçamentos
-    linha1_y = bottom_y + 100  # Nome
-    linha2_y = bottom_y + 260  # Processo
-    linha3_y = bottom_y + 440  # Escalão
-    linha4_y = bottom_y + 590  # Turma
+    linha1_y = bottom_y + 80  # Nome
+    linha2_y = bottom_y + 220  # Processo
+    linha3_y = bottom_y + 380  # Escalão
+    linha4_y = bottom_y + 520  # Turma
 
     # Nome
     draw.text(
