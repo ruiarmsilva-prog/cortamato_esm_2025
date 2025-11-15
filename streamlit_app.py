@@ -61,10 +61,13 @@ def get_escalão(data_nascimento):
 
 # --- Função para gerar QR Code ---
 def gerar_qr(numero, nome):
-    qr = qrcode.make(f"Corta-Mato ESM | Nº {numero} | {nome}")
+    # QR agora contém o link direto para o site com o parâmetro de chegada
+    url = f"https://cortamatoesm.streamlit.app/?chegada={numero}"
+    qr = qrcode.make(url)
     buf = BytesIO()
     qr.save(buf, format="PNG")
     return buf.getvalue()
+
 
 # --- Carregar base de dados de alunos ---
 df = load_data()
@@ -215,6 +218,52 @@ elif menu == "Lista de Inscritos (admin)":
                     zipf.write(qr_path, arcname=os.path.basename(qr_path))
         with open(zip_path, "rb") as f:
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
+
+# --- Menu: Chegadas (admin only) ---
+if menu == "Chegadas":
+    if not acesso_admin:
+        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
+        st.stop()
+
+    st.subheader("🏁 Registo de Chegadas")
+
+    # Carregar inscrições
+    if os.path.exists(DATA_FILE):
+        inscritos = pd.read_csv(DATA_FILE)
+    else:
+        st.error("❌ Não há inscrições registadas.")
+        st.stop()
+
+    # Ler parâmetro da URL
+    params = st.experimental_get_query_params()
+    chegada = params.get("chegada", [None])[0]
+
+    if chegada:
+        try:
+            processo = int(chegada)
+            aluno = inscritos[inscritos["Processo"] == processo]
+            if aluno.empty:
+                st.error("❌ Aluno não encontrado.")
+            else:
+                if "Classificação" not in inscritos.columns:
+                    inscritos["Classificação"] = ""
+
+                if aluno.iloc[0]["Classificação"] != "":
+                    st.warning(f"⚠️ {aluno.iloc[0]['Nome']} já foi classificado em {aluno.iloc[0]['Classificação']}º.")
+                else:
+                    # Próxima posição
+                    classificados = inscritos[inscritos["Classificação"] != ""]
+                    posicao = len(classificados) + 1
+                    inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = posicao
+                    inscritos.to_csv(DATA_FILE, index=False)
+                    st.success(f"✅ {aluno.iloc[0]['Nome']} classificado em {posicao}º lugar.")
+        except ValueError:
+            st.error("⚠️ Parâmetro de chegada inválido.")
+
+    # Mostrar tabela de classificados
+    if "Classificação" in inscritos.columns:
+        classificados = inscritos[inscritos["Classificação"] != ""].sort_values("Classificação")
+        st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
