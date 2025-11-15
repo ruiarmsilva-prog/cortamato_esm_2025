@@ -166,6 +166,11 @@ elif menu == "Lista de Inscritos (admin)":
             "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
         ])
 
+    # 📋 Mostrar tabela
+    st.dataframe(inscritos.drop(columns=["QR"], errors="ignore"))
+    csv = inscritos.to_csv(index=False).encode('utf-8')
+    st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
+
     # 🔍 Eliminar inscrição por processo
     processo = st.text_input("🔍 Eliminar inscrição por número de processo")
     if processo:
@@ -211,10 +216,6 @@ elif menu == "Lista de Inscritos (admin)":
         with open(zip_path, "rb") as f:
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
 
-    # 📋 Mostrar tabela
-    st.dataframe(inscritos.drop(columns=["QR"], errors="ignore"))
-    csv = inscritos.to_csv(index=False).encode('utf-8')
-    st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
