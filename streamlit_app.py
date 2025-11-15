@@ -13,26 +13,20 @@ DORSAL_DIR = "data/dorsais"
 # --- Função para carregar dados ---
 @st.cache_data
 def load_data():
-    df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
-    df.columns = df.columns.str.strip().str.lower()
+    df_raw = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0, header=0)
 
-    # Renomear colunas para nomes consistentes
-    col_map = {
-        "processo": "processo",
-        "nome": "nome",
-        "data nascimento": "data_nascimento",
-        "sexo": "género",
-        "turma": "turma"
-    }
-    df = df.rename(columns=col_map)
+    # Atribuir nomes fixos com base na posição das colunas
+    df = pd.DataFrame()
+    df["processo"] = df_raw.iloc[:, 0]
+    df["nome"] = df_raw.iloc[:, 1]
+    df["género"] = df_raw.iloc[:, 2]
+    df["data_nascimento"] = pd.to_datetime(df_raw.iloc[:, 3], errors="coerce")
+    df["turma"] = df_raw.iloc[:, 6]
 
-    # Verificação silenciosa das colunas obrigatórias
-    obrigatorias = ["processo", "nome", "data_nascimento", "género", "turma"]
-    if not all(col in df.columns for col in obrigatorias):
-        st.error("❌ O ficheiro Excel não contém todas as colunas obrigatórias: Processo, Nome, Data nascimento, Sexo, Turma.")
-        st.stop()
+    # Verificação de integridade
+    if df.isnull().any().any():
+        st.warning("⚠️ Alguns dados estão incompletos ou mal formatados.")
 
-    df["data_nascimento"] = pd.to_datetime(df["data_nascimento"], errors="coerce")
     df["processo"] = df["processo"].astype(int)
     return df
 
