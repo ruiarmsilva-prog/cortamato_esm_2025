@@ -15,51 +15,77 @@ DORSAL_DIR = "data/dorsais"
 
 # --- Função para gerar dorsal A6 com QR e dados ---
 def gerar_dorsal_a6(nome, processo, escalao):
+    from PIL import Image, ImageDraw, ImageFont
+    import qrcode
+    from io import BytesIO
+
+    # Dimensões A6 a 300 DPI
     A6_WIDTH = 1240
     A6_HEIGHT = 1748
 
+    # Criar imagem branca
     dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
     draw = ImageDraw.Draw(dorsal)
 
-    # QR code ocupa metade superior
+    # --- QR CODE (60% da altura) ---
     qr_size = int(A6_HEIGHT * 0.60)
     url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
+
     qr_img = qrcode.make(url)
     qr_img = qr_img.resize((qr_size, qr_size))
+
     qr_x = (A6_WIDTH - qr_size) // 2
     dorsal.paste(qr_img, (qr_x, 0))
 
-    # Texto na metade inferior
-    bottom_y = A6_HEIGHT - qr_size
-
-    font_name = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50)
-    font_esc = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 50)
-
+    # --- Texto ---
+    bottom_y = qr_size
     center_x = A6_WIDTH // 2
 
-    # Espaço entre linhas
-    linha1_y = bottom_y + 80
-    linha2_y = bottom_y + 220
-    linha3_y = bottom_y + 360
+    # Fontes seguras para Streamlit Cloud
+    FONT_MAIN = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+
+    font_name = ImageFont.truetype(FONT_BOLD, 120)
+    font_proc = ImageFont.truetype(FONT_BOLD, 140)
+    font_esc  = ImageFont.truetype(FONT_BOLD, 110)
+
+    # Espaçamento das linhas
+    linha1_y = bottom_y + 100
+    linha2_y = bottom_y + 280
+    linha3_y = bottom_y + 450
 
     # Nome
-    draw.text((center_x, linha1_y), nome,
-        fill="black", font=font_name, anchor="mm")
+    draw.text(
+        (center_x, linha1_y),
+        nome,
+        fill="black",
+        font=font_name,
+        anchor="mm"
+    )
 
     # Processo
-    draw.text((center_x, linha2_y), str(processo),
-        fill="black", font=font_name, anchor="mm")
+    draw.text(
+        (center_x, linha2_y),
+        str(processo),
+        fill="black",
+        font=font_proc,
+        anchor="mm"
+    )
 
     # Escalão
-    draw.text((center_x, linha3_y), escalao,
-        fill="black", font=font_esc, anchor="mm")
+    draw.text(
+        (center_x, linha3_y),
+        escalao,
+        fill="black",
+        font=font_esc,
+        anchor="mm"
+    )
 
-
+    # Guardar em memória
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
     buffer.seek(0)
     return buffer.getvalue()
-
 # --- Autenticação simples ---
 def autenticar():
     senha = st.sidebar.text_input("🔒 Palavra-passe (admin)", type="password")
