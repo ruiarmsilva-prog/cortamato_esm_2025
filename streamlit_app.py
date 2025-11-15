@@ -14,10 +14,9 @@ DORSAL_DIR = "data/dorsais"
 @st.cache_data
 def load_data():
     df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
-    df.columns = df.columns.str.strip().str.lower()  # remove espaços e põe tudo em minúsculas
-    st.write("🧾 Colunas encontradas:", df.columns.tolist())
+    df.columns = df.columns.str.strip().str.lower()
 
-    # Mapeamento flexível de nomes
+    # Renomear colunas para nomes consistentes
     col_map = {
         "processo": "processo",
         "nome": "nome",
@@ -25,21 +24,17 @@ def load_data():
         "sexo": "género",
         "turma": "turma"
     }
-
     df = df.rename(columns=col_map)
 
-    # Verifica se colunas essenciais existem
+    # Verificação silenciosa das colunas obrigatórias
     obrigatorias = ["processo", "nome", "data_nascimento", "género", "turma"]
-    for col in obrigatorias:
-        if col not in df.columns:
-            st.error(f"❌ A coluna obrigatória '{col}' não foi encontrada.")
-            st.stop()
+    if not all(col in df.columns for col in obrigatorias):
+        st.error("❌ O ficheiro Excel não contém todas as colunas obrigatórias: Processo, Nome, Data nascimento, Sexo, Turma.")
+        st.stop()
 
     df["data_nascimento"] = pd.to_datetime(df["data_nascimento"], errors="coerce")
     df["processo"] = df["processo"].astype(int)
     return df
-
-
 
 # --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
