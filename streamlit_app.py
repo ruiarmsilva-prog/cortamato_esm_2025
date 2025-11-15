@@ -31,7 +31,7 @@ def gerar_dorsal_a6(nome, processo, escalao):
     padding = 50
 
     try:
-        font_body = ImageFont.truetype("arial.ttf", 140)
+        font_body = ImageFont.truetype("arial.ttf", 400)
     except:
         font_body = ImageFont.load_default()
 
