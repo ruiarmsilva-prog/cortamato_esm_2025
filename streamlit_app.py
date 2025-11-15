@@ -59,14 +59,35 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     linha3_y = bottom_y + 380  # Escalão
     linha4_y = bottom_y + 520  # Turma
 
-    # Nome
+    # --- Dividir nome longo ---
+    partes_nome = nome.split()
+
+    if len(partes_nome) > 3:
+        meio = len(partes_nome) // 2
+        nome_linha1 = " ".join(partes_nome[:meio])
+        nome_linha2 = " ".join(partes_nome[meio:])
+    else:
+        nome_linha1 = nome
+        nome_linha2 = None
+
+    # Nome (linha 1)
     draw.text(
         (center_x, linha1_y),
-        nome,
+        nome_linha1,
         fill="black",
         font=font_name,
         anchor="mm"
     )
+
+    # Nome (linha 2) — só se existir
+    if nome_linha2:
+        draw.text(
+            (center_x, linha1_y + 120),
+            nome_linha2,
+            fill="black",
+            font=font_name,
+            anchor="mm"
+        )
 
     # Processo
     draw.text(
