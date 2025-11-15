@@ -321,7 +321,7 @@ elif menu == "Lista de Inscritos (admin)":
         with open(zip_path, "rb") as f:
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
 
-# --- Menu: Chegadas (admin only) ---
+# --- Menu: Chegadas ---
 elif menu == "Chegadas":
     if not acesso_admin:
         st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
@@ -336,6 +336,12 @@ elif menu == "Chegadas":
         st.error("❌ Não há inscrições registadas.")
         st.stop()
 
+    # Garantir colunas
+    if "Classificação" not in inscritos.columns:
+        inscritos["Classificação"] = ""
+    if "Hora" not in inscritos.columns:
+        inscritos["Hora"] = ""
+
     # Ler parâmetro da URL
     params = st.experimental_get_query_params()
     chegada = params.get("chegada", [None])[0]
@@ -344,27 +350,37 @@ elif menu == "Chegadas":
         try:
             processo = int(chegada)
             aluno = inscritos[inscritos["Processo"] == processo]
-            if aluno.empty:
-                st.error("❌ Aluno não encontrado.")
-            else:
-                # 👉 Aqui entra o bloco que me enviaste
-                if "Classificação" not in inscritos.columns:
-                    inscritos["Classificação"] = ""
 
+            if aluno.empty:
+                st.error("❌ Número de processo não encontrado.")
+            else:
+                nome = aluno.iloc[0]["Nome"]
+
+                # Já está classificado?
                 if aluno.iloc[0]["Classificação"] != "":
-                    st.warning(f"⚠️ {aluno.iloc[0]['Nome']} já foi classificado em {aluno.iloc[0]['Classificação']}º.")
+                    pos = aluno.iloc[0]["Classificação"]
+                    hora = aluno.iloc[0]["Hora"]
+                    st.warning(f"⚠️ {nome} já foi registado: {pos}º lugar às {hora}.")
                 else:
+                    # Calcular posição
                     posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
+                    
+                    # Registar
+                    hora_agora = datetime.now().strftime("%H:%M:%S")
                     inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = posicao
+                    inscritos.loc[inscritos["Processo"] == processo, "Hora"] = hora_agora
                     inscritos.to_csv(DATA_FILE, index=False)
-                    st.success(f"✅ {aluno.iloc[0]['Nome']} classificado em {posicao}º lugar.")
+
+                    st.success(f"🏁 {nome} classificado em {posicao}º lugar!")
+                    st.info(f"⏱ Hora de chegada: {hora_agora}")
+
         except ValueError:
-            st.error("⚠️ Parâmetro de chegada inválido.")
+            st.error("⚠️ Parâmetro inválido.")
 
     # Mostrar tabela de classificados
-    if "Classificação" in inscritos.columns:
-        classificados = inscritos[inscritos["Classificação"] != ""].sort_values("Classificação")
-        st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
+    classificados = inscritos[inscritos["Classificação"] != ""].sort_values("Classificação")
+    st.subheader("📊 Classificação geral")
+    st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
 
 # --- Menu: Classificações (admin only) ---
 elif menu == "Classificações":
