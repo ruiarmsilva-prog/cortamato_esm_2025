@@ -28,7 +28,7 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     draw = ImageDraw.Draw(dorsal)
 
     # --- Borda preta 2px ---
-    draw.rectangle([(1, 1), (A6_WIDTH - 2, A6_HEIGHT - 2)], outline="black", width=2)
+    draw.rectangle([(1, 1), (A6_WIDTH - 4, A6_HEIGHT - 4)], outline="black", width=2)
 
     # --- QR CODE (60% da altura) ---
     qr_size = int(A6_HEIGHT * 0.60)
