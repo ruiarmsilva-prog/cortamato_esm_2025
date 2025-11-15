@@ -220,7 +220,7 @@ elif menu == "Lista de Inscritos (admin)":
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
 
 # --- Menu: Chegadas (admin only) ---
-if menu == "Chegadas":
+elif menu == "Chegadas":
     if not acesso_admin:
         st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
         st.stop()
@@ -245,15 +245,14 @@ if menu == "Chegadas":
             if aluno.empty:
                 st.error("❌ Aluno não encontrado.")
             else:
+                # 👉 Aqui entra o bloco que me enviaste
                 if "Classificação" not in inscritos.columns:
                     inscritos["Classificação"] = ""
 
                 if aluno.iloc[0]["Classificação"] != "":
                     st.warning(f"⚠️ {aluno.iloc[0]['Nome']} já foi classificado em {aluno.iloc[0]['Classificação']}º.")
                 else:
-                    # Próxima posição
-                    classificados = inscritos[inscritos["Classificação"] != ""]
-                    posicao = len(classificados) + 1
+                    posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
                     inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = posicao
                     inscritos.to_csv(DATA_FILE, index=False)
                     st.success(f"✅ {aluno.iloc[0]['Nome']} classificado em {posicao}º lugar.")
