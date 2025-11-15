@@ -156,6 +156,7 @@ elif menu == "Lista de Inscritos":
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
+# --- Menu: Lista de Inscritos ---
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições")
     if os.path.exists(DATA_FILE):
