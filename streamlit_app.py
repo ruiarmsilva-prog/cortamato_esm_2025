@@ -23,7 +23,7 @@ acesso_admin = autenticar()
 
 # --- Menu condicionado por permissões ---
 if acesso_admin:
-    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Lista de Inscritos (admin)", "Classificações"])
+    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Lista de Inscritos (admin)", "Chegadas", "Classificações"])
 else:
     menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Chegadas"])
 
