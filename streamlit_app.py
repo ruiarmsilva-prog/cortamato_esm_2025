@@ -15,20 +15,20 @@ DORSAL_DIR = "data/dorsais"
 def load_data():
     df_raw = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0, header=0)
 
-    # Atribuir nomes fixos com base na posição das colunas
+    # Extrair colunas por índice
     df = pd.DataFrame()
-    df["processo"] = df_raw.iloc[:, 0]
-    df["nome"] = df_raw.iloc[:, 1]
-    df["género"] = df_raw.iloc[:, 2]
+    df["processo"] = pd.to_numeric(df_raw.iloc[:, 0], errors="coerce")
+    df["nome"] = df_raw.iloc[:, 1].astype(str).str.strip()
+    df["género"] = df_raw.iloc[:, 2].astype(str).str.strip()
     df["data_nascimento"] = pd.to_datetime(df_raw.iloc[:, 3], errors="coerce")
-    df["turma"] = df_raw.iloc[:, 6]
+    df["turma"] = df_raw.iloc[:, 6].astype(str).str.strip()
 
-    # Verificação de integridade
-    if df.isnull().any().any():
-        st.warning("⚠️ Alguns dados estão incompletos ou mal formatados.")
+    # Remover registos inválidos
+    df = df[df["processo"].notnull()]
+    df["processo"] = df["processo"].astype("Int64")
 
-    df["processo"] = df["processo"].astype(int)
     return df
+
 
 # --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
