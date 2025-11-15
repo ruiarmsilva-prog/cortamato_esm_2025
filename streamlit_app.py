@@ -21,13 +21,13 @@ def gerar_dorsal_a6(nome, processo, escalao):
     dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
     draw = ImageDraw.Draw(dorsal)
 
-    qr_size = A6_HEIGHT / 2
+    qr_size = A6_HEIGHT // 2
     url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
 
     qr_img = qrcode.make(url)
     qr_img = qr_img.resize((qr_size, qr_size))
 
-    qr_x = (A6_WIDTH - qr_size) / 2
+    qr_x = (A6_WIDTH - qr_size) // 2
     dorsal.paste(qr_img, (qr_x, 0))
 
     bottom_y = qr_size
@@ -39,12 +39,12 @@ def gerar_dorsal_a6(nome, processo, escalao):
         font_body = ImageFont.load_default()
 
     # largura de cada coluna
-    col_width = A6_WIDTH / 2
-    left_x = col_width / 2  # centro da coluna esquerda
+    col_width = A6_WIDTH // 2
+    left_x = col_width // 2  # centro da coluna esquerda
     draw.text((left_x, bottom_y + 40), f"Nome:\n{nome}", fill="black", font=font_body)
     draw.text((left_x, bottom_y + 320), f"Processo:\n{processo}", fill="black", font=font_body)
 
-    right_x = A6_WIDTH - (col_width / 2)  # centro da coluna direita
+    right_x = A6_WIDTH - (col_width // 2)  # centro da coluna direita
     draw.text((right_x, bottom_y + 40), f"Escalão:\n{escalao}", fill="black", font=font_body)
 
     buffer = BytesIO()
