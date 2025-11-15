@@ -4,11 +4,49 @@ import qrcode
 from io import BytesIO
 from datetime import datetime, date
 import os
+from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
 DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
+
+# --- Função para gerar dorsal A6 com QR e dados ---
+def gerar_dorsal_a6(nome, processo, escalao):
+    A6_WIDTH = 1240
+    A6_HEIGHT = 1748
+
+    dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
+    draw = ImageDraw.Draw(dorsal)
+
+    qr_size = A6_HEIGHT // 2
+    url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
+
+    qr_img = qrcode.make(url)
+    qr_img = qr_img.resize((qr_size, qr_size))
+
+    qr_x = (A6_WIDTH - qr_size) // 2
+    dorsal.paste(qr_img, (qr_x, 0))
+
+    bottom_y = qr_size
+    padding = 50
+
+    try:
+        font_body = ImageFont.truetype("arial.ttf", 70)
+    except:
+        font_body = ImageFont.load_default()
+
+    left_x = padding
+    draw.text((left_x, bottom_y + 80), f"Nome:\n{nome}", fill="black", font=font_body)
+    draw.text((left_x, bottom_y + 350), f"Processo:\n{processo}", fill="black", font=font_body)
+
+    right_x = A6_WIDTH // 2 + padding
+    draw.text((right_x, bottom_y + 80), f"Escalão:\n{escalao}", fill="black", font=font_body)
+
+    buffer = BytesIO()
+    dorsal.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer.getvalue()
 
 # --- Autenticação simples ---
 def autenticar():
@@ -59,16 +97,6 @@ def get_escalão(data_nascimento):
     else:
         return "Fora de escalão"
 
-# --- Função para gerar QR Code ---
-def gerar_qr(numero, nome):
-    # QR agora contém o link direto para o site com o parâmetro de chegada
-    url = f"https://cortamatoesm.streamlit.app/?chegada={numero}"
-    qr = qrcode.make(url)
-    buf = BytesIO()
-    qr.save(buf, format="PNG")
-    return buf.getvalue()
-
-
 # --- Carregar base de dados de alunos ---
 df = load_data()
 
@@ -104,11 +132,11 @@ if menu == "Nova Inscrição":
                     st.warning("⚠️ Este aluno já está inscrito.")
                 else:
                     if st.button("✅ Confirmar inscrição"):
-                        qr_img = gerar_qr(processo, dados["nome"])
+                        dorsal_img = gerar_dorsal_a6(dados["nome"], processo, escalão)
                         os.makedirs(DORSAL_DIR, exist_ok=True)
                         qr_path = f"{DORSAL_DIR}/{processo}.png"
                         with open(qr_path, "wb") as f:
-                            f.write(qr_img)
+                            f.write(dorsal_img)
 
                         novo = pd.DataFrame([[processo, dados["nome"], dados["data_nascimento"], dados["género"],
                                               dados["turma"], escalão, "", qr_path]],
@@ -116,7 +144,7 @@ if menu == "Nova Inscrição":
                         inscricoes = pd.concat([inscricoes, novo], ignore_index=True)
                         inscricoes.to_csv(DATA_FILE, index=False)
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
-                        st.image(qr_img, width=150)
+                        st.image(dorsal_img, width=300)
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
