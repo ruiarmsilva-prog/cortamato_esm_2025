@@ -323,9 +323,6 @@ elif menu == "Lista de Inscritos (admin)":
 
 # --- Menu: Chegadas ---
 elif menu == "Chegadas":
-    if not acesso_admin:
-        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
-        st.stop()
 
     st.subheader("🏁 Registo de Chegadas")
 
