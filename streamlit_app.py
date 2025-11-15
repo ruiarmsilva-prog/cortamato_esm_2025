@@ -14,7 +14,7 @@ DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
 
 # --- Função para gerar dorsal A6 com QR e dados ---
-def gerar_dorsal_a6(nome, processo, escalao):
+def gerar_dorsal_a6(nome, processo, escalao, turma):
     from PIL import Image, ImageDraw, ImageFont
     import qrcode
     from io import BytesIO
@@ -26,6 +26,9 @@ def gerar_dorsal_a6(nome, processo, escalao):
     # Criar imagem branca
     dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
     draw = ImageDraw.Draw(dorsal)
+
+    # --- Borda preta 2px ---
+    draw.rectangle([(1, 1), (A6_WIDTH - 2, A6_HEIGHT - 2)], outline="black", width=2)
 
     # --- QR CODE (60% da altura) ---
     qr_size = int(A6_HEIGHT * 0.60)
@@ -45,14 +48,16 @@ def gerar_dorsal_a6(nome, processo, escalao):
     FONT_MAIN = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
-    font_name = ImageFont.truetype(FONT_BOLD, 80)
-    font_proc = ImageFont.truetype(FONT_BOLD, 80)
-    font_esc  = ImageFont.truetype(FONT_BOLD, 80)
+    font_name  = ImageFont.truetype(FONT_BOLD, 120)
+    font_proc  = ImageFont.truetype(FONT_BOLD, 140)
+    font_esc   = ImageFont.truetype(FONT_BOLD, 110)
+    font_turma = ImageFont.truetype(FONT_MAIN, 95)
 
-    # Espaçamento das linhas
-    linha1_y = bottom_y + 100
-    linha2_y = bottom_y + 280
-    linha3_y = bottom_y + 450
+    # Espaçamentos
+    linha1_y = bottom_y + 120  # Nome
+    linha2_y = bottom_y + 300  # Processo
+    linha3_y = bottom_y + 480  # Escalão
+    linha4_y = bottom_y + 650  # Turma
 
     # Nome
     draw.text(
@@ -81,11 +86,21 @@ def gerar_dorsal_a6(nome, processo, escalao):
         anchor="mm"
     )
 
+    # Turma
+    draw.text(
+        (center_x, linha4_y),
+        turma,
+        fill="black",
+        font=font_turma,
+        anchor="mm"
+    )
+
     # Guardar em memória
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
     buffer.seek(0)
     return buffer.getvalue()
+
 # --- Autenticação simples ---
 def autenticar():
     senha = st.sidebar.text_input("🔒 Palavra-passe (admin)", type="password")
