@@ -11,7 +11,6 @@ st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
 
-# --- Função para gerar dorsal A6 com QR e dados ---
 def gerar_dorsal_a6(nome, processo, escalao):
     A6_WIDTH = 1240
     A6_HEIGHT = 1748
@@ -32,16 +31,16 @@ def gerar_dorsal_a6(nome, processo, escalao):
     padding = 50
 
     try:
-        font_body = ImageFont.truetype("arial.ttf", 70)
+        font_body = ImageFont.truetype("arial.ttf", 140)
     except:
         font_body = ImageFont.load_default()
 
     left_x = padding
-    draw.text((left_x, bottom_y + 80), f"Nome:\n{nome}", fill="black", font=font_body)
-    draw.text((left_x, bottom_y + 350), f"Processo:\n{processo}", fill="black", font=font_body)
+    draw.text((left_x, bottom_y + 40), f"Nome:\n{nome}", fill="black", font=font_body)
+    draw.text((left_x, bottom_y + 300), f"Processo:\n{processo}", fill="black", font=font_body)
 
     right_x = A6_WIDTH // 2 + padding
-    draw.text((right_x, bottom_y + 80), f"Escalão:\n{escalao}", fill="black", font=font_body)
+    draw.text((right_x, bottom_y + 40), f"Escalão:\n{escalao}", fill="black", font=font_body)
 
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
