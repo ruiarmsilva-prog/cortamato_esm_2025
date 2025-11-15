@@ -1,3 +1,5 @@
+# Código Streamlit completo com dorsal A6 integrado
+
 import streamlit as st
 import pandas as pd
 import qrcode
@@ -11,6 +13,7 @@ st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
 
+# --- Função para gerar dorsal A6 com QR e dados ---
 def gerar_dorsal_a6(nome, processo, escalao):
     A6_WIDTH = 1240
     A6_HEIGHT = 1748
@@ -31,15 +34,17 @@ def gerar_dorsal_a6(nome, processo, escalao):
     padding = 50
 
     try:
-        font_body = ImageFont.truetype("arial.ttf", 600)
+        font_body = ImageFont.truetype("arial.ttf", 140)
     except:
         font_body = ImageFont.load_default()
 
-    left_x = padding
+    # largura de cada coluna
+    col_width = A6_WIDTH // 2
+    left_x = col_width // 2  # centro da coluna esquerda
     draw.text((left_x, bottom_y + 40), f"Nome:\n{nome}", fill="black", font=font_body)
-    draw.text((left_x, bottom_y + 300), f"Processo:\n{processo}", fill="black", font=font_body)
+    draw.text((left_x, bottom_y + 320), f"Processo:\n{processo}", fill="black", font=font_body)
 
-    right_x = A6_WIDTH // 2 + padding
+    right_x = A6_WIDTH - (col_width // 2)  # centro da coluna direita
     draw.text((right_x, bottom_y + 40), f"Escalão:\n{escalao}", fill="black", font=font_body)
 
     buffer = BytesIO()
