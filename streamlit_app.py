@@ -14,19 +14,31 @@ DORSAL_DIR = "data/dorsais"
 @st.cache_data
 def load_data():
     df = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0)
-    df.columns = df.columns.str.strip()  # remove espaços extras
+    df.columns = df.columns.str.strip().str.lower()  # remove espaços e põe tudo em minúsculas
     st.write("🧾 Colunas encontradas:", df.columns.tolist())
 
+    # Mapeamento flexível de nomes
+    col_map = {
+        "processo": "processo",
+        "nome": "nome",
+        "data nascimento": "data_nascimento",
+        "sexo": "género",
+        "turma": "turma"
+    }
+
+    df = df.rename(columns=col_map)
+
     # Verifica se colunas essenciais existem
-    colunas_esperadas = ["Processo", "Nome", "Data nascimento", "Género", "Turma"]
-    for col in colunas_esperadas:
+    obrigatorias = ["processo", "nome", "data_nascimento", "género", "turma"]
+    for col in obrigatorias:
         if col not in df.columns:
             st.error(f"❌ A coluna obrigatória '{col}' não foi encontrada.")
             st.stop()
 
-    df["Data nascimento"] = pd.to_datetime(df["Data nascimento"], errors="coerce")
-    df["Processo"] = df["Processo"].astype(int)
+    df["data_nascimento"] = pd.to_datetime(df["data_nascimento"], errors="coerce")
+    df["processo"] = df["processo"].astype(int)
     return df
+
 
 
 # --- Função para determinar escalão ---
