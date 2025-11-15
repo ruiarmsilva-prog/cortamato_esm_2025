@@ -32,12 +32,8 @@ def gerar_dorsal_a6(nome, processo, escalao):
     # Texto na metade inferior
     bottom_y = qr_size
 
-    try:
-        font_name = ImageFont.truetype("arial.ttf", 100)  # Nome e Processo
-        font_esc = ImageFont.truetype("arial.ttf", 100)   # Escalão
-    except:
-        font_name = ImageFont.load_default()
-        font_esc = ImageFont.load_default()
+    font_name = ImageFont.truetype("arial.ttf", 100)  # Nome e Processo
+    font_esc = ImageFont.truetype("arial.ttf", 100)   # Escalão
 
     col_width = A6_WIDTH // 2
     left_center_x = col_width // 2
