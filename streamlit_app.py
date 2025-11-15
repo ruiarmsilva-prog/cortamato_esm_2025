@@ -21,6 +21,7 @@ def load_data():
     df["nome"] = df_raw.iloc[:, 1].astype(str).str.strip()
     df["género"] = df_raw.iloc[:, 2].astype(str).str.strip()
     df["data_nascimento"] = pd.to_datetime(df_raw.iloc[:, 3], errors="coerce")
+    df["CC"] = df_raw.iloc[:, 4].astype(str).str.strip()
     df["turma"] = df_raw.iloc[:, 5].astype(str).str.strip()
 
     # Remover registos inválidos
