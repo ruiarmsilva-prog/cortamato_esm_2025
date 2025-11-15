@@ -22,7 +22,7 @@ def gerar_dorsal_a6(nome, processo, escalao):
     draw = ImageDraw.Draw(dorsal)
 
     # QR code ocupa metade superior
-    qr_size = A6_HEIGHT // 2
+    qr_size = int(A6_HEIGHT * 0.60)
     url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
     qr_img = qrcode.make(url)
     qr_img = qr_img.resize((qr_size, qr_size))
@@ -30,7 +30,7 @@ def gerar_dorsal_a6(nome, processo, escalao):
     dorsal.paste(qr_img, (qr_x, 0))
 
     # Texto na metade inferior
-    bottom_y = qr_size
+    bottom_y = A6_HEIGHT - qr_size
 
     font_name = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50)
     font_esc = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 50)
