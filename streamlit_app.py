@@ -35,16 +35,25 @@ def gerar_dorsal_a6(nome, processo, escalao):
     font_name = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 50)
     font_esc = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 50)
 
-    col_width = A6_WIDTH // 2
-    left_center_x = col_width // 2
-    right_center_x = col_width + col_width // 2
+    center_x = A6_WIDTH // 2
 
-    # Nome e Processo na coluna esquerda
-    draw.text((left_center_x, bottom_y + 50), nome, fill="black", font=font_name, anchor="mm")
-    draw.text((left_center_x, bottom_y + 200), str(processo), fill="black", font=font_name, anchor="mm")
+    # Espaço entre linhas
+    linha1_y = bottom_y + 80
+    linha2_y = bottom_y + 220
+    linha3_y = bottom_y + 360
 
-    # Escalão na coluna direita
-    draw.text((right_center_x, bottom_y + 125), escalao, fill="black", font=font_esc, anchor="mm")
+    # Nome
+    draw.text((center_x, linha1_y), nome,
+        fill="black", font=font_name, anchor="mm")
+
+    # Processo
+    draw.text((center_x, linha2_y), str(processo),
+        fill="black", font=font_name, anchor="mm")
+
+    # Escalão
+    draw.text((center_x, linha3_y), escalao,
+        fill="black", font=font_esc, anchor="mm")
+
 
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
