@@ -163,11 +163,11 @@ elif menu == "Lista de Inscritos (admin)":
         inscritos = pd.read_csv(DATA_FILE)
     else:
         inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão",
         ])
 
     # 📋 Mostrar tabela
-    st.dataframe(inscritos.drop(columns=["QR"], errors="ignore"))
+    st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
