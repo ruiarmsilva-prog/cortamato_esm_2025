@@ -339,6 +339,16 @@ elif menu == "Chegadas":
     if "Hora" not in inscritos.columns:
         inscritos["Hora"] = ""
 
+    op = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
+    filtro = inscritos[inscritos["Escalão"] == op]
+    st.write(f"Inscritos no escalão {op}:")
+    st.dataframe(filtro)
+
+    ap = st.selectbox("Escolher género", sorted(inscritos["género"].unique()))
+    filtro1 = inscritos[inscritos["género"] == ap]
+    st.write(f"Inscritos no género {ap}:")
+    st.dataframe(filtro1)
+
     # Ler parâmetro da URL
     params = st.experimental_get_query_params()
     chegada = params.get("chegada", [None])[0]
