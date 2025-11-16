@@ -319,9 +319,4 @@ elif menu == "Classificações":
     filtro = inscritos[inscritos["Escalão"] == esc]
     st.write(f"Inscritos no escalão {esc}:")
     st.dataframe(filtro)
-    nome = st.selectbox("Adicionar tempo a:", filtro["Nome"])
-    tempo = st.text_input("Tempo (ex: 00:12:45)")
-    if st.button("Registar tempo"):
-        inscritos.loc[inscritos["Nome"] == nome, "Tempo"] = tempo
-        inscritos.to_csv(DATA_FILE, index=False)
-        st.success(f"Tempo registado para {nome}: {tempo}")
+    
