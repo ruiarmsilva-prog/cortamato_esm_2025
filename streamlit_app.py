@@ -1,5 +1,3 @@
-# Código Streamlit completo com dorsal A6 integrado
-
 import streamlit as st
 import pandas as pd
 import qrcode
@@ -13,24 +11,30 @@ st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 DATA_FILE = "data/inscricoes.csv"
 DORSAL_DIR = "data/dorsais"
 
+# ---------------------------------------------------------
+#     FORÇAR ABERTURA NO MENU CHEGADAS SE HOUVER ?chegada=
+# ---------------------------------------------------------
+
+params = st.experimental_get_query_params()
+if "chegada" in params and params["chegada"][0] not in ("", None):
+    if st.session_state.get("menu") != "Chegadas":
+        st.session_state["menu"] = "Chegadas"
+        st.rerun()
+
 # --- Função para gerar dorsal A6 com QR e dados ---
 def gerar_dorsal_a6(nome, processo, escalao, turma):
     from PIL import Image, ImageDraw, ImageFont
     import qrcode
     from io import BytesIO
 
-    # Dimensões A6 a 300 DPI
     A6_WIDTH = 1240
     A6_HEIGHT = 1748
 
-    # Criar imagem branca
     dorsal = Image.new("RGB", (A6_WIDTH, A6_HEIGHT), "white")
     draw = ImageDraw.Draw(dorsal)
 
-    # --- Borda preta 2px ---
     draw.rectangle([(1, 1), (A6_WIDTH - 15, A6_HEIGHT - 15)], outline="black", width=4)
 
-    # --- QR CODE (60% da altura) ---
     qr_size = int(A6_HEIGHT * 0.60)
     url = f"https://cortamatoesm.streamlit.app/?chegada={processo}"
 
@@ -40,28 +44,18 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     qr_x = (A6_WIDTH - qr_size) // 2
     dorsal.paste(qr_img, (qr_x, 0))
 
-    # --- Texto ---
     bottom_y = qr_size
     center_x = A6_WIDTH // 2
 
-    # Fontes seguras para Streamlit Cloud
-    FONT_MAIN = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    font = ImageFont.truetype(FONT, 60)
 
-    font_name  = ImageFont.truetype(FONT_MAIN, 60)
-    font_proc  = ImageFont.truetype(FONT_MAIN, 60)
-    font_esc   = ImageFont.truetype(FONT_MAIN, 60)
-    font_turma = ImageFont.truetype(FONT_MAIN, 60)
+    linha1_y = bottom_y + 40
+    linha2_y = bottom_y + 250
+    linha3_y = bottom_y + 350
+    linha4_y = bottom_y + 450
 
-    # Espaçamentos
-    linha1_y = bottom_y + 40  # Nome
-    linha2_y = bottom_y + 250  # Processo
-    linha3_y = bottom_y + 350  # Escalão
-    linha4_y = bottom_y + 450  # Turma
-
-    # --- Dividir nome longo ---
     partes_nome = nome.split()
-
     if len(partes_nome) > 3:
         meio = len(partes_nome) // 2
         nome_linha1 = " ".join(partes_nome[:meio])
@@ -70,53 +64,14 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
         nome_linha1 = nome
         nome_linha2 = None
 
-    # Nome (linha 1)
-    draw.text(
-        (center_x, linha1_y),
-        nome_linha1,
-        fill="black",
-        font=font_name,
-        anchor="mm"
-    )
-
-    # Nome (linha 2) — só se existir
+    draw.text((center_x, linha1_y), nome_linha1, fill="black", font=font, anchor="mm")
     if nome_linha2:
-        draw.text(
-            (center_x, linha1_y + 80),
-            nome_linha2,
-            fill="black",
-            font=font_name,
-            anchor="mm"
-        )
+        draw.text((center_x, linha1_y + 80), nome_linha2, fill="black", font=font, anchor="mm")
 
-    # Processo
-    draw.text(
-        (center_x, linha2_y),
-        str(processo),
-        fill="black",
-        font=font_proc,
-        anchor="mm"
-    )
+    draw.text((center_x, linha2_y), str(processo), fill="black", font=font, anchor="mm")
+    draw.text((center_x, linha3_y), escalao, fill="black", font=font, anchor="mm")
+    draw.text((center_x, linha4_y), turma, fill="black", font=font, anchor="mm")
 
-    # Escalão
-    draw.text(
-        (center_x, linha3_y),
-        escalao,
-        fill="black",
-        font=font_esc,
-        anchor="mm"
-    )
-
-    # Turma
-    draw.text(
-        (center_x, linha4_y),
-        turma,
-        fill="black",
-        font=font_turma,
-        anchor="mm"
-    )
-
-    # Guardar em memória
     buffer = BytesIO()
     dorsal.save(buffer, format="PNG")
     buffer.seek(0)
@@ -133,13 +88,25 @@ def autenticar():
 
 acesso_admin = autenticar()
 
-# --- Menu condicionado por permissões ---
-if acesso_admin:
-    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Lista de Inscritos (admin)", "Chegadas", "Classificações"])
-else:
-    menu = st.sidebar.radio("Menu", ["Nova Inscrição", "Lista de Inscritos", "Chegadas"])
+# -----------------------------
+#   MENU CONTROLADO POR STATE
+# -----------------------------
 
-# --- Função para carregar dados ---
+if "menu" not in st.session_state:
+    st.session_state["menu"] = "Nova Inscrição"
+
+opcoes_admin = ["Nova Inscrição", "Lista de Inscritos", "Lista de Inscritos (admin)", "Chegadas", "Classificações"]
+opcoes_user   = ["Nova Inscrição", "Lista de Inscritos", "Chegadas"]
+
+menu = st.sidebar.radio(
+    "Menu",
+    opcoes_admin if acesso_admin else opcoes_user,
+    index=(opcoes_admin if acesso_admin else opcoes_user).index(st.session_state["menu"])
+)
+
+st.session_state["menu"] = menu
+
+# --- Carregar dados dos alunos ---
 @st.cache_data
 def load_data():
     df_raw = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0, header=0)
@@ -154,7 +121,6 @@ def load_data():
     df["processo"] = df["processo"].astype("Int64")
     return df
 
-# --- Função para determinar escalão ---
 def get_escalão(data_nascimento):
     if isinstance(data_nascimento, str):
         data_nascimento = datetime.strptime(data_nascimento, "%Y-%m-%d")
@@ -171,10 +137,11 @@ def get_escalão(data_nascimento):
     else:
         return "Fora de escalão"
 
-# --- Carregar base de dados de alunos ---
 df = load_data()
 
-# --- Menu: Nova Inscrição ---
+# ----------------------------------------------------------------------
+#                              NOVA INSCRIÇÃO
+# ----------------------------------------------------------------------
 if menu == "Nova Inscrição":
     st.subheader("🆕 Nova Inscrição")
     processo_input = st.text_input("Número de processo do aluno")
@@ -185,7 +152,7 @@ if menu == "Nova Inscrição":
             processo = int(processo_input)
             aluno_base = df[df["processo"] == processo]
             if aluno_base.empty:
-                st.error("❌ Processo não encontrado na base de dados.")
+                st.error("❌ Processo não encontrado.")
             else:
                 dados = aluno_base.iloc[0]
                 escalão = get_escalão(dados["data_nascimento"])
@@ -220,16 +187,19 @@ if menu == "Nova Inscrição":
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
                         st.image(dorsal_img, width=300)
         except ValueError:
-            st.error("⚠️ Introduz um número de processo válido.")
+            st.error("⚠️ Número inválido.")
 
-# --- Menu: Lista de Inscritos ---
+# ----------------------------------------------------------------------
+#                           LISTA DE INSCRITOS
+# ----------------------------------------------------------------------
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
+
     if os.path.exists(DATA_FILE):
         inscritos = pd.read_csv(DATA_FILE)
     else:
         inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR"
+            "Processo","Nome","Data nascimento","Género","Turma","Escalão","Tempo","QR"
         ])
 
     processo = st.text_input("🔍 Pesquisar por número de processo")
@@ -239,11 +209,10 @@ elif menu == "Lista de Inscritos":
             aluno = inscritos[inscritos["Processo"] == processo]
             if not aluno.empty:
                 dados = aluno.iloc[0]
-                st.success(f"✅ Aluno encontrado: {dados['Nome']}")
-                st.write(f"📅 Data de nascimento: {dados['Data nascimento']}")
-                st.write(f"🏫 Turma: {dados['Turma']}")
-                st.write(f"🎽 Escalão: {dados['Escalão']}")
-                st.write(f"👤 Sexo: {dados['Género']}")
+                st.success(f"Aluno: {dados['Nome']}")
+                st.write(f"Turma: {dados['Turma']}")
+                st.write(f"Escalão: {dados['Escalão']}")
+                st.write(f"Género: {dados['Género']}")
 
                 if st.button("🖨️ Imprimir Dorsal"):
                     st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
@@ -251,97 +220,78 @@ elif menu == "Lista de Inscritos":
                 if acesso_admin and st.button("❌ Eliminar inscrição"):
                     inscritos = inscritos[inscritos["Processo"] != processo]
                     inscritos.to_csv(DATA_FILE, index=False)
-                    st.warning(f"Inscrição de {dados['Nome']} eliminada.")
-            else:
-                st.error("❌ Processo não encontrado.")
+                    st.warning("Inscrição eliminada.")
         except ValueError:
-            st.error("⚠️ Introduz um número de processo válido.")
+            st.error("Número inválido.")
 
     st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
-    csv = inscritos.to_csv(index=False).encode('utf-8')
-    st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
+    st.download_button("⬇️ Exportar CSV", inscritos.to_csv(index=False), "inscricoes.csv")
 
-# --- Menu: Lista de Inscritos (admin) ---
+# ----------------------------------------------------------------------
+#                     LISTA DE INSCRITOS (ADMIN)
+# ----------------------------------------------------------------------
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições (Admin)")
+
     if os.path.exists(DATA_FILE):
         inscritos = pd.read_csv(DATA_FILE)
     else:
         inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão",
+            "Processo","Nome","Data nascimento","Género","Turma","Escalão"
         ])
 
-    # 📋 Mostrar tabela
     st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
-    csv = inscritos.to_csv(index=False).encode('utf-8')
-    st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
+    st.download_button("⬇️ Exportar CSV", inscritos.to_csv(index=False), "inscricoes.csv")
 
-    # 🔍 Eliminar inscrição por processo
-    processo = st.text_input("🔍 Eliminar inscrição por número de processo")
+    processo = st.text_input("Eliminar por processo")
     if processo:
         try:
             processo = int(processo)
             aluno = inscritos[inscritos["Processo"] == processo]
             if not aluno.empty:
                 dados = aluno.iloc[0]
-                st.success(f"✅ Aluno encontrado: {dados['Nome']}")
-                st.write(f"📅 Data de nascimento: {dados['Data nascimento']}")
-                st.write(f"🏫 Turma: {dados['Turma']}")
-                st.write(f"🎽 Escalão: {dados['Escalão']}")
-                st.write(f"👤 Sexo: {dados['Género']}")
+                st.success(f"Eliminar {dados['Nome']}?")
 
-                if st.button("❌ Confirmar eliminação"):
+                if st.button("❌ Confirmar"):
                     inscritos = inscritos[inscritos["Processo"] != processo]
                     inscritos.to_csv(DATA_FILE, index=False)
-                    st.warning(f"Inscrição de {dados['Nome']} eliminada.")
-            else:
-                st.error("❌ Processo não encontrado.")
-        except ValueError:
-            st.error("⚠️ Introduz um número de processo válido.")
+                    st.warning("Inscrição eliminada.")
+        except:
+            st.error("Número inválido.")
 
-    # 🧹 Limpar todas as inscrições
-    if st.button("🧹 Apagar todas as inscrições"):
+    if st.button("🧹 Apagar tudo"):
         if os.path.exists(DATA_FILE):
             os.remove(DATA_FILE)
-            st.success("✅ Todas as inscrições foram apagadas.")
-        else:
-            st.info("ℹ️ Nenhuma inscrição encontrada.")
+            st.success("Tudo apagado.")
 
-    # ⬇️ Download dos dorsais em ZIP
-    if st.button("⬇️ Download dos dorsais (ZIP)"):
-        import zipfile
-        import tempfile
-
+    if st.button("⬇️ Download dorsais ZIP"):
+        import zipfile, tempfile
         zip_path = os.path.join(tempfile.gettempdir(), "dorsais.zip")
         with zipfile.ZipFile(zip_path, "w") as zipf:
             for _, row in inscritos.iterrows():
                 qr_path = row["QR"]
                 if os.path.exists(qr_path):
-                    zipf.write(qr_path, arcname=os.path.basename(qr_path))
+                    filename = f"{row['Processo']}_{row['Escalão']}_{row['Género']}.png"
+                    zipf.write(qr_path, arcname=filename)
         with open(zip_path, "rb") as f:
-            st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
+            st.download_button("📦 Descarregar ZIP", f.read(), file_name="dorsais.zip")
 
-# --- Menu: Chegadas ---
+# ----------------------------------------------------------------------
+#                                CHEGADAS
+# ----------------------------------------------------------------------
 elif menu == "Chegadas":
     st.subheader("🏁 Registo de Chegadas")
 
-    # Carregar inscrições como string para evitar NaN
     if os.path.exists(DATA_FILE):
-        inscritos = pd.read_csv(DATA_FILE, dtype=str)
-        inscritos = inscritos.fillna("")
+        inscritos = pd.read_csv(DATA_FILE, dtype=str).fillna("")
     else:
-        st.error("❌ Não há inscrições registadas.")
+        st.error("Não há inscrições.")
         st.stop()
 
-    # Garantir colunas
     if "Classificação" not in inscritos.columns:
         inscritos["Classificação"] = ""
     if "Hora" not in inscritos.columns:
         inscritos["Hora"] = ""
-
-    # -------------------------
-    #    REGISTO DE CHEGADAS
-    # -------------------------
 
     params = st.experimental_get_query_params()
     chegada = params.get("chegada", [None])[0]
@@ -356,38 +306,29 @@ elif menu == "Chegadas":
             else:
                 nome = aluno.iloc[0]["Nome"]
 
-                # Verificar se já está classificado
                 if aluno.iloc[0]["Classificação"] != "":
                     pos = aluno.iloc[0]["Classificação"]
                     hora = aluno.iloc[0]["Hora"]
-                    st.warning(f"⚠️ {nome} já foi registado: {pos}º lugar às {hora}.")
+                    st.warning(f"⚠️ {nome} já registado: {pos}º lugar às {hora}.")
                 else:
-                    # Contar classificados existentes
                     posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
-
-                    # Registar chegada
                     hora_agora = datetime.now().strftime("%H:%M:%S")
+
                     inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = str(posicao)
                     inscritos.loc[inscritos["Processo"] == processo, "Hora"] = hora_agora
-
                     inscritos.to_csv(DATA_FILE, index=False)
 
                     st.success(f"🏁 {nome} classificado em {posicao}º lugar!")
-                    st.info(f"⏱ Hora de chegada: {hora_agora}")
+                    st.info(f"⏱ Hora: {hora_agora}")
 
-        except ValueError:
-            st.error("⚠️ Parâmetro inválido.")
-
-    # -------------------------
-    #      CONSULTAR RESULTADOS
-    # -------------------------
+        except:
+            st.error("Parâmetro inválido.")
 
     st.subheader("📊 Classificação por Escalão e Género")
 
-    esc = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
-    sex = st.selectbox("Escolher género", sorted(inscritos["Género"].unique()))
+    esc = st.selectbox("Escalão", sorted(inscritos["Escalão"].unique()))
+    sex = st.selectbox("Género", sorted(inscritos["Género"].unique()))
 
-    # Filtrar classificados desse grupo
     classificados = inscritos[
         (inscritos["Classificação"] != "") &
         (inscritos["Escalão"] == esc) &
@@ -400,25 +341,25 @@ elif menu == "Chegadas":
 
     st.dataframe(classificados.drop(columns=["QR", "Tempo"], errors="ignore"))
 
-
-# --- Menu: Classificações (admin only) ---
+# ----------------------------------------------------------------------
+#                        CLASSIFICAÇÕES (ADMIN)
+# ----------------------------------------------------------------------
 elif menu == "Classificações":
     if not acesso_admin:
-        st.warning("🔒 Esta funcionalidade está disponível apenas para administradores.")
+        st.warning("Apenas para admin.")
         st.stop()
 
-    st.subheader("🏁 Classificações por Escalão e Género")
+    st.subheader("🏁 Classificações (Admin)")
 
     if os.path.exists(DATA_FILE):
         inscritos = pd.read_csv(DATA_FILE)
     else:
         inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", 
+            "Processo","Nome","Data nascimento","Género","Turma","Escalão"
         ])
 
-    op = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
+    op = st.selectbox("Escalão", sorted(inscritos["Escalão"].unique()))
     filtro = inscritos[inscritos["Escalão"] == op]
-    st.write(f"Inscritos no escalão {op}:")
     st.dataframe(filtro)
 
     nome = st.selectbox("Adicionar tempo a:", filtro["Nome"])
