@@ -398,7 +398,7 @@ elif menu == "Chegadas":
         classificados["Classificação"] = classificados["Classificação"].astype(int)
         classificados = classificados.sort_values("Classificação")
 
-    st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
+    st.dataframe(classificados.drop(columns=["QR", "Tempo"], errors="ignore"))
 
 
 # --- Menu: Classificações (admin only) ---
