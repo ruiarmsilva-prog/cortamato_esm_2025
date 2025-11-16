@@ -339,17 +339,10 @@ elif menu == "Chegadas":
     if "Hora" not in inscritos.columns:
         inscritos["Hora"] = ""
 
-    op = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
-    filtro = inscritos[inscritos["Escalão"] == op]
-    st.write(f"Inscritos no escalão {op}:")
-    st.dataframe(filtro)
+    # -------------------------
+    #    REGISTO DE CHEGADAS
+    # -------------------------
 
-    ap = st.selectbox("Escolher género", sorted(inscritos["Género"].unique()))
-    filtro1 = inscritos[inscritos["Género"] == ap]
-    st.write(f"Inscritos no género {ap}:")
-    st.dataframe(filtro1)
-
-    # Ler parâmetro da URL
     params = st.experimental_get_query_params()
     chegada = params.get("chegada", [None])[0]
 
@@ -372,7 +365,7 @@ elif menu == "Chegadas":
                     # Contar classificados existentes
                     posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
 
-                    # Registar
+                    # Registar chegada
                     hora_agora = datetime.now().strftime("%H:%M:%S")
                     inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = str(posicao)
                     inscritos.loc[inscritos["Processo"] == processo, "Hora"] = hora_agora
@@ -385,12 +378,26 @@ elif menu == "Chegadas":
         except ValueError:
             st.error("⚠️ Parâmetro inválido.")
 
-    # Mostrar tabela de classificados
-    classificados = inscritos[inscritos["Classificação"] != ""].copy()
-    classificados["Classificação"] = classificados["Classificação"].astype(int)
-    classificados = classificados.sort_values("Classificação")
+    # -------------------------
+    #      CONSULTAR RESULTADOS
+    # -------------------------
 
-    st.subheader("📊 Classificação geral")
+    st.subheader("📊 Classificação por Escalão e Género")
+
+    esc = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
+    sex = st.selectbox("Escolher género", sorted(inscritos["Género"].unique()))
+
+    # Filtrar classificados desse grupo
+    classificados = inscritos[
+        (inscritos["Classificação"] != "") &
+        (inscritos["Escalão"] == esc) &
+        (inscritos["Género"] == sex)
+    ].copy()
+
+    if not classificados.empty:
+        classificados["Classificação"] = classificados["Classificação"].astype(int)
+        classificados = classificados.sort_values("Classificação")
+
     st.dataframe(classificados.drop(columns=["QR"], errors="ignore"))
 
 
