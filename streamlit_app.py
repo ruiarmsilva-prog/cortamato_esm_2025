@@ -344,8 +344,8 @@ elif menu == "Chegadas":
     st.write(f"Inscritos no escalão {op}:")
     st.dataframe(filtro)
 
-    ap = st.selectbox("Escolher género", sorted(inscritos["género"].unique()))
-    filtro1 = inscritos[inscritos["género"] == ap]
+    ap = st.selectbox("Escolher género", sorted(inscritos["Género"].unique()))
+    filtro1 = inscritos[inscritos["Género"] == ap]
     st.write(f"Inscritos no género {ap}:")
     st.dataframe(filtro1)
 
