@@ -13,9 +13,9 @@ from supabase import create_client, Client
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
 # --- Supabase setup ---
-SUPABASE_URL = "https://xxxxxx.supabase.co"  # substitui com a tua URL
-SUPABASE_KEY = "eyJhbGciOiJI..."  # substitui com a tua anon key
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 DORSAL_DIR = "data/dorsais"
 
