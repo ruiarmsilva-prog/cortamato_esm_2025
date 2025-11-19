@@ -192,7 +192,7 @@ if menu == "Nova Inscrição":
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
                 
-                inscritos = load_inscricoes_supabase()
+                # Verificar se o aluno já está inscrito
                 res_check = supabase.table("inscricoes")\
                     .select("*")\
                     .eq("processo", processo)\
@@ -203,7 +203,8 @@ if menu == "Nova Inscrição":
                 else:
                     if st.button("✅ Confirmar inscrição"):
                         # Gerar dorsal
-                        dorsal_img = gerar_dorsal_a6(dados["nome"], processo, escalão, dados["turma"])
+                        dorsal_bytes = gerar_dorsal_a6(dados["nome"], processo, escalão, dados["turma"])
+                        dorsal_file = BytesIO(dorsal_bytes)
 
                         # Nome do ficheiro
                         filename = f"{processo}_{escalão}_{dados['género']}.png"
@@ -211,10 +212,10 @@ if menu == "Nova Inscrição":
 
                         # Guardar no Supabase Storage
                         supabase.storage.from_("dorsais").upload(
-                            file=upload_path,
-                            file_content=dorsal_img,
+                            path=upload_path,
+                            file=dorsal_file,
                             content_type="image/png",
-                            file_options={"upsert": True}
+                            upsert=True
                         )
 
                         # Guardar na tabela inscricoes
@@ -231,7 +232,8 @@ if menu == "Nova Inscrição":
                         }).execute()
 
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
-                        st.image(dorsal_img, width=300)
+                        st.image(dorsal_bytes, width=300)
+
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
