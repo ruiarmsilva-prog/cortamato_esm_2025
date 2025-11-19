@@ -210,10 +210,10 @@ if menu == "Nova Inscrição":
                         upload_path = f"datadorsais/{filename}" 
 
                         # Guardar no Supabase Storage
-                        supabase.storage.from_("data").upload(
-                            upload_path,       # caminho dentro do bucket
-                            dorsal_bytes,      # bytes do dorsal
-                            content_type="image/png",
+                        supabase.storage.from_("dorsais").upload(
+                            path=f"dorsais/{filename}",   # caminho dentro do bucket
+                            file=dorsal_bytes,              # bytes do ficheiro
+                            content_type="image/png", 
                             upsert=True
                         )
 
