@@ -3,3 +3,4 @@ qrcode
 Pillow
 python-multipart
 openpyxl
+supabase_py
