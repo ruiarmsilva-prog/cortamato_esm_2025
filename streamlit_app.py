@@ -19,7 +19,7 @@ def init_connection():
     return create_client(url, key)
 
 supabase = init_connection()
-st.write("Ligado ao Supabase:", supabase)
+# st.write("Ligado ao Supabase:", supabase)
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
