@@ -207,10 +207,10 @@ if menu == "Nova Inscrição":
 
                         # Nome do ficheiro e caminho no bucket
                         filename = f"{processo}_{escalão}_{dados['género']}.png"
-                        upload_path = f"dorsais/{filename}" 
+                        upload_path = f"datadorsais/{filename}" 
 
                         # Guardar no Supabase Storage
-                        supabase.storage.from_("dorsais").upload(
+                        supabase.storage.from_("data").upload(
                             upload_path,       # caminho dentro do bucket
                             dorsal_bytes,      # bytes do dorsal
                             content_type="image/png",
