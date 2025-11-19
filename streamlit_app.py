@@ -7,11 +7,26 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
-from supabase import create_client, Client
 
+# supabase may not be available in all environments; import defensively
 # Initialize connection.
 # Uses st.cache_resource to only run once.
 @st.cache_resource
+def init_connection():
+    # If supabase client is not installed or available, return None and continue without it.
+    if create_client is None:
+        st.warning("Supabase client not available; continuing without a Supabase connection.")
+        return None
+
+    url = st.secrets.get("SUPABASE_URL")
+    key = st.secrets.get("SUPABASE_KEY")
+    if not url or not key:
+        st.warning("Supabase credentials not found in st.secrets; continuing without a Supabase connection.")
+        return None
+
+    return create_client(url, key)
+
+supabase = init_connection()
 def init_connection():
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
