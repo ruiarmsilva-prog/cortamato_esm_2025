@@ -211,10 +211,8 @@ if menu == "Nova Inscrição":
 
                         # Guardar no Supabase Storage
                         supabase.storage.from_("dorsais").upload(
-                            f"dorsais/{filename}",       # caminho dentro do bucket
-                            dorsal_bytes,                # bytes do ficheiro
-                            content_type="image/png",
-                            upsert=True
+                            f"dorsais/{filename}",  # caminho dentro do bucket
+                            dorsal_bytes            # bytes do ficheiro
                         )
 
                         # Guardar na tabela inscricoes
