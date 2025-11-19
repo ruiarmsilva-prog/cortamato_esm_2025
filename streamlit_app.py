@@ -207,7 +207,7 @@ if menu == "Nova Inscrição":
 
                         # Nome do ficheiro e caminho no bucket
                         filename = f"{processo}_{escalão}_{dados['género']}.png"
-                        upload_path = f"data/dorsais/{filename}" 
+                        upload_path = f"dorsais/{filename}" 
 
                         # Guardar no Supabase Storage
                         supabase.storage.from_("dorsais").upload(
