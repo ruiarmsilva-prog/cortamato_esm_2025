@@ -7,6 +7,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
+import supabase
 from supabase import create_client, Client
 
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
