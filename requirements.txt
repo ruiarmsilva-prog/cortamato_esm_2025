@@ -3,4 +3,5 @@ qrcode
 Pillow
 python-multipart
 openpyxl
-
+st-supabase-connection==2.24.2
+supabase==2.24.0
