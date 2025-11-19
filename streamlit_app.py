@@ -217,15 +217,11 @@ if menu == "Nova Inscrição":
 
                         # Guardar na tabela inscricoes
                         supabase.table("inscricoes").insert({
-                            "processo": processo,
-                            "nome": dados["nome"],
-                            "data_nascimento": dados["data_nascimento"].isoformat(),
-                            "género": dados["género"],
-                            "turma": dados["turma"],
-                            "escalão": escalão,
-                            "QR": filename,
-                            "Classificação": None,
-                            "Hora": None
+                            "processo": int(dados["processo"]),  # convert int64 -> int
+                            "nome": str(dados["nome"]),
+                            "classificacao": None,
+                            "hora": None,
+                            "qr_url": upload_path
                         }).execute()
 
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
