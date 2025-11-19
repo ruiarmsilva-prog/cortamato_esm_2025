@@ -191,8 +191,8 @@ if menu == "Nova Inscrição":
                     st.markdown(f"**Turma:** {dados['turma']}")
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
-
-                # Verificar se já existe inscrição no Supabase
+                
+                # Verificar se já existe inscrição
                 res_check = supabase.table("inscricoes")\
                     .select("*")\
                     .eq("processo", processo)\
@@ -205,22 +205,17 @@ if menu == "Nova Inscrição":
                         # Gerar dorsal
                         dorsal_bytes = gerar_dorsal_a6(dados["nome"], processo, escalão, dados["turma"])
 
-                        # Nome do ficheiro
+                        # Nome do ficheiro e caminho no bucket
                         filename = f"{processo}_{escalão}_{dados['género']}.png"
                         upload_path = f"dorsais/{filename}"
 
-                        # Guardar temporariamente num ficheiro local e fazer upload
-                        import tempfile
-                        with tempfile.NamedTemporaryFile(suffix=".png") as tmpfile:
-                            tmpfile.write(dorsal_bytes)
-                            tmpfile.flush()  # garantir que está escrito
-
-                            supabase.storage.from_("dorsais").upload(
-                                path=upload_path,      # caminho dentro do bucket
-                                file=tmpfile.name,     # ficheiro local
-                                content_type="image/png",
-                                upsert=True
-                            )
+                        # Guardar no Supabase Storage
+                        supabase.storage.from_("dorsais").upload(
+                            upload_path,       # caminho dentro do bucket
+                            dorsal_bytes,      # bytes do dorsal
+                            content_type="image/png",
+                            upsert=True
+                        )
 
                         # Guardar na tabela inscricoes
                         supabase.table("inscricoes").insert({
@@ -239,7 +234,7 @@ if menu == "Nova Inscrição":
                         st.image(dorsal_bytes, width=300)
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
-
+            
 # --- Menu: Lista de Inscritos ---
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
