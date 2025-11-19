@@ -151,6 +151,25 @@ def load_inscricoes():
             inscritos[col] = ""
     return inscritos
 
+def load_inscricoes_supabase():
+    """Lê todas as inscrições guardadas na tabela inscricoes do Supabase."""
+    response = supabase.table("inscricoes").select("*").execute()
+    data = response.data if response.data else []
+
+    df = pd.DataFrame(data)
+
+    # Garantir colunas
+    for col in ["processo", "nome", "data_nascimento", "genero", "turma",
+                "escalao", "tempo", "qr", "classificacao", "hora"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    return df
+
+def add_inscricao_supabase(reg):
+    """Guarda uma nova inscrição."""
+    supabase.table("inscricoes").insert(reg).execute()
+
 # --- Menu: Nova Inscrição ---
 if menu == "Nova Inscrição":
     st.subheader("🆕 Nova Inscrição")
@@ -172,23 +191,45 @@ if menu == "Nova Inscrição":
                     st.markdown(f"**Turma:** {dados['turma']}")
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
+                
+                inscritos = load_inscricoes_supabase()
+                res_check = supabase.table("inscricoes")\
+                    .select("*")\
+                    .eq("processo", processo)\
+                    .execute()
 
-                inscritos = load_inscricoes()
-                if str(processo) in inscritos["Processo"].values:
+                if res_check.data:
                     st.warning("⚠️ Este aluno já está inscrito.")
                 else:
                     if st.button("✅ Confirmar inscrição"):
+                        # Gerar dorsal
                         dorsal_img = gerar_dorsal_a6(dados["nome"], processo, escalão, dados["turma"])
-                        os.makedirs(DORSAL_DIR, exist_ok=True)
-                        qr_path = f"{DORSAL_DIR}/{processo}_{escalão}_{dados['género']}.png"
-                        with open(qr_path, "wb") as f:
-                            f.write(dorsal_img)
 
-                        novo = pd.DataFrame([[processo, dados["nome"], dados["data_nascimento"], dados["género"],
-                                              dados["turma"], escalão, "", qr_path, "", ""]],
-                                            columns=inscritos.columns)
-                        inscritos = pd.concat([inscritos, novo], ignore_index=True)
-                        inscritos.to_csv(DATA_FILE, index=False)
+                        # Nome do ficheiro
+                        filename = f"{processo}_{escalão}_{dados['género']}.png"
+                        upload_path = f"dorsais/{filename}"
+
+                        # Guardar no Supabase Storage
+                        supabase.storage.from_("dorsais").upload(
+                            file=upload_path,
+                            file_content=dorsal_img,
+                            content_type="image/png",
+                            file_options={"upsert": True}
+                        )
+
+                        # Guardar na tabela inscricoes
+                        supabase.table("inscricoes").insert({
+                            "processo": processo,
+                            "nome": dados["nome"],
+                            "data_nascimento": dados["data_nascimento"].isoformat(),
+                            "género": dados["género"],
+                            "turma": dados["turma"],
+                            "escalão": escalão,
+                            "QR": filename,
+                            "Classificação": None,
+                            "Hora": None
+                        }).execute()
+
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
                         st.image(dorsal_img, width=300)
         except ValueError:
@@ -230,7 +271,7 @@ elif menu == "Lista de Inscritos":
 # --- Menu: Lista de Inscritos (admin) ---
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições (Admin)")
-    inscritos = load_inscricoes()
+    inscritos = load_inscricoes_supabase()
     st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
