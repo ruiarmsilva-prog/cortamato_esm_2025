@@ -139,7 +139,7 @@ def insert_inscricao(dados_aluno, escalao, qr_path):
         "escalao": escalao,
         "classificacao": None,
         "hora": None,
-        "qr_url": qr_path
+        "qr_url": str(qr_path)
     }).execute()
 
 def update_chegada(processo, classificacao, hora):

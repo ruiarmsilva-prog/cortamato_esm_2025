@@ -4,3 +4,5 @@ Pillow
 python-multipart
 openpyxl
 supabase
+supabase-py
+postgrest
