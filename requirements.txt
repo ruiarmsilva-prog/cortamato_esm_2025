@@ -3,7 +3,4 @@ qrcode
 Pillow
 python-multipart
 openpyxl
-supabase
-supabase-py
-supabase-js
-postgrest
+
