@@ -8,28 +8,32 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
-from supabase import create_client, Client
 
-# supabase may not be available in all environments; import defensively
-# Initialize connection.
-# Uses st.cache_resource to only run once.
-@st.cache_resource
-def init_connection():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
-    return create_client(url, key)
+# --- Google Sheets ---
+import gspread
+from google.oauth2.service_account import Credentials
 
-supabase = init_connection()
-# st.write("Ligado ao Supabase:", supabase)
+SERVICE_ACCOUNT_FILE = "service_account.json"
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
 
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+client = gspread.authorize(creds)
+
+# Nome da Sheet
+SHEET_NAME = "Corta-Mato ESM"
+sheet = client.open(SHEET_NAME).sheet1
+
+# --- Configuração Streamlit ---
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
-DATA_FILE = "data/inscricoes.csv"
+DATA_FILE = "data/inscricoes.csv"  # backup local opcional
 DORSAL_DIR = "data/dorsais"
 
 # --- Função para gerar dorsal A6 com QR e dados ---
 def gerar_dorsal_a6(nome, processo, escalao, turma):
-    # Dimensões A6 a 300 DPI
     A6_WIDTH = 1240
     A6_HEIGHT = 1748
 
@@ -52,13 +56,11 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     font_esc   = ImageFont.truetype(FONT_MAIN, 60)
     font_turma = ImageFont.truetype(FONT_MAIN, 60)
 
-    # Espaçamentos
     linha1_y = bottom_y + 40
     linha2_y = bottom_y + 250
     linha3_y = bottom_y + 350
     linha4_y = bottom_y + 450
 
-    # Dividir nome longo
     partes_nome = nome.split()
     if len(partes_nome) > 3:
         meio = len(partes_nome) // 2
@@ -80,7 +82,7 @@ def gerar_dorsal_a6(nome, processo, escalao, turma):
     buffer.seek(0)
     return buffer.getvalue()
 
-# --- Função para autenticação ---
+# --- Autenticação admin ---
 def autenticar():
     senha = st.sidebar.text_input("🔒 Palavra-passe (admin)", type="password")
     if senha == "admin123":
@@ -91,7 +93,7 @@ def autenticar():
 
 acesso_admin = autenticar()
 
-# --- Menu lateral com key para evitar duplo clique ---
+# --- Menu lateral ---
 if acesso_admin:
     menu = st.sidebar.radio(
         "Menu",
@@ -105,7 +107,7 @@ else:
         key="menu_user"
     )
 
-# --- Carregar dados de alunos ---
+# --- Carregar base de alunos ---
 @st.cache_data
 def load_data():
     df_raw = pd.read_excel("ListagemAlunos_25_26.xlsx", sheet_name=0, header=0)
@@ -138,38 +140,48 @@ def get_escalão(data_nascimento):
 
 df = load_data()
 
-# --- Função para carregar inscrições ---
+# --- Google Sheets funções ---
 def load_inscricoes():
-    if os.path.exists(DATA_FILE):
-        inscritos = pd.read_csv(DATA_FILE, dtype=str).fillna("")
-    else:
-        inscritos = pd.DataFrame(columns=[
-            "Processo", "Nome", "Data nascimento", "Género", "Turma", "Escalão", "Tempo", "QR", "Classificação", "Hora"
+    # Lê todos os dados da Sheet
+    records = sheet.get_all_records()
+    if not records:
+        return pd.DataFrame(columns=[
+            "Processo", "Nome", "Data nascimento", "Género", "Turma",
+            "Escalão", "Tempo", "QR", "Classificação", "Hora"
         ])
+    df_insc = pd.DataFrame(records)
     # Garantir colunas
     for col in ["Classificação", "Hora", "Tempo", "QR"]:
-        if col not in inscritos.columns:
-            inscritos[col] = ""
-    return inscritos
+        if col not in df_insc.columns:
+            df_insc[col] = ""
+    return df_insc
 
-def load_inscricoes_supabase():
-    """Lê todas as inscrições guardadas na tabela inscricoes do Supabase."""
-    response = supabase.table("inscricoes").select("*").execute()
-    data = response.data if response.data else []
+def add_inscricao_sheet(reg):
+    row = [
+        reg.get("Processo", ""),
+        reg.get("Nome", ""),
+        reg.get("Data nascimento", ""),
+        reg.get("Género", ""),
+        reg.get("Turma", ""),
+        reg.get("Escalão", ""),
+        reg.get("Tempo", ""),
+        reg.get("QR", ""),
+        reg.get("Classificação", ""),
+        reg.get("Hora", "")
+    ]
+    sheet.append_row(row)
 
-    df = pd.DataFrame(data)
-
-    # Garantir colunas
-    for col in ["processo", "nome", "data_nascimento", "genero", "turma",
-                "escalao", "tempo", "qr", "classificacao", "hora"]:
-        if col not in df.columns:
-            df[col] = ""
-
-    return df
-
-def add_inscricao_supabase(reg):
-    """Guarda uma nova inscrição."""
-    supabase.table("inscricoes").insert(reg).execute()
+def update_inscricao_sheet(processo, col_name, value):
+    df_insc = load_inscricoes()
+    if col_name not in df_insc.columns:
+        st.error(f"Coluna {col_name} não existe.")
+        return
+    try:
+        row_idx = df_insc.index[df_insc["Processo"] == processo][0] + 2  # +2 por cabeçalho e base 1
+        col_idx = df_insc.columns.get_loc(col_name) + 1
+        sheet.update_cell(row_idx, col_idx, value)
+    except IndexError:
+        st.error(f"Processo {processo} não encontrado na Sheet.")
 
 # --- Menu: Nova Inscrição ---
 if menu == "Nova Inscrição":
@@ -192,41 +204,34 @@ if menu == "Nova Inscrição":
                     st.markdown(f"**Turma:** {dados['turma']}")
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
-                
-                # Verificar se já existe inscrição
-                res_check = supabase.table("inscricoes")\
-                    .select("*")\
-                    .eq("processo", processo)\
-                    .execute()
 
-                if res_check.data:
+                inscritos = load_inscricoes()
+                if processo in inscritos["Processo"].values:
                     st.warning("⚠️ Este aluno já está inscrito.")
                 else:
                     if st.button("✅ Confirmar inscrição"):
-                        # Gerar dorsal
                         dorsal_bytes = gerar_dorsal_a6(dados["nome"], processo, escalão, dados["turma"])
-
-                        # Nome do ficheiro e caminho no bucket
                         filename = f"{processo}_{escalão}_{dados['género']}.png"
-                        upload_path = f"datadorsais/{filename}" 
+                        qr_path = os.path.join(DORSAL_DIR, filename)
+                        os.makedirs(DORSAL_DIR, exist_ok=True)
+                        with open(qr_path, "wb") as f:
+                            f.write(dorsal_bytes)
 
-                        # Guardar no Supabase Storage
-                        supabase.storage.from_("dorsais").upload(
-                            f"dorsais/{filename}",  # caminho dentro do bucket
-                            dorsal_bytes            # bytes do ficheiro
-                        )
-
-                        # Guardar na tabela inscricoes
-                        supabase.table("inscricoes").insert({
-                            "processo": int(dados["processo"]),  # convert int64 -> int
-                            "nome": str(dados["nome"]),
-                            "classificacao": None,
-                            "hora": None,
-                            "qr_url": upload_path
-                        }).execute()
-
+                        add_inscricao_sheet({
+                            "Processo": processo,
+                            "Nome": dados["nome"],
+                            "Data nascimento": dados["data_nascimento"].strftime("%Y-%m-%d"),
+                            "Género": dados["género"],
+                            "Turma": dados["turma"],
+                            "Escalão": escalão,
+                            "Tempo": "",
+                            "QR": qr_path,
+                            "Classificação": "",
+                            "Hora": ""
+                        })
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
                         st.image(dorsal_bytes, width=300)
+
         except ValueError:
             st.error("⚠️ Introduz um número de processo válido.")
 
@@ -266,7 +271,7 @@ elif menu == "Lista de Inscritos":
 # --- Menu: Lista de Inscritos (admin) ---
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições (Admin)")
-    inscritos = load_inscricoes_supabase()
+    inscritos = load_inscricoes()
     st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
