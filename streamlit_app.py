@@ -8,18 +8,22 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
-
-# --- Google Sheets ---
 import gspread
 from google.oauth2.service_account import Credentials
 
-SERVICE_ACCOUNT_FILE = "service_account.json"
+# Lê o JSON da conta de serviço do Streamlit Secrets
+service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT"])
+
+# Define os scopes necessários
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# Cria as credenciais a partir do JSON
+creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+
+# Autoriza o gspread
 client = gspread.authorize(creds)
 
 # Nome da Sheet
