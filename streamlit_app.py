@@ -12,19 +12,18 @@ import tempfile
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Lê o secret diretamente do Streamlit
 service_account_info = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
-
-# Se foi guardado como string JSON, converte em dict
-if isinstance(service_account_info, str):
-    service_account_info = json.loads(service_account_info)
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+# Converte a string para dicionário Python
+import json
+service_account_info_dict = json.loads(service_account_info)
+
+creds = Credentials.from_service_account_info(service_account_info_dict, scopes=SCOPES)
 client = gspread.authorize(creds)
 
 # Nome da Sheet
