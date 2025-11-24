@@ -1,5 +1,6 @@
 .streamlit/secrets.toml
-
+# Ignorar service account key
+cortamatoesm2025-479222-4140538a9ff1.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
