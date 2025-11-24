@@ -5,6 +5,7 @@ import qrcode
 from io import BytesIO
 from datetime import datetime
 import os
+import json
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
@@ -13,16 +14,13 @@ from google.oauth2.service_account import Credentials
 
 # Lê o JSON da conta de serviço do Streamlit Secrets
 service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT"])
-
 # Define os scopes necessários
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
-
 # Cria as credenciais a partir do JSON
 creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
-
 # Autoriza o gspread
 client = gspread.authorize(creds)
 
