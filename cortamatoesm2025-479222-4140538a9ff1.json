@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "cortamatoesm2025-479222",
+  "private_key_id": "4140538a9ff1a69b73de1d2f0227d582f6eadd74",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCenCZZdyB/kLzX\n3BlY7usspJrzQ+PKDbXlYZ5eMKYXPZHAdZO13nvej7dWT7yc0OC8wo4AAOrnnd47\nxico14aD3YeEusY7dBwUPaLJ0ZJpcbo2NP822pkx4qVnDXL7j/8I9MPbNsOPr7T/\ncw/ShAEtJ42yg0BHqvMvHd7807gxUT2kOLv4Y+RaocLoeDaGNy72SF1KK4xYrPrf\nt+oNMpMDx2Al28YDy/SjcSSWeEAc3rApiZqaj1m/sord55ODKzy+BGSM7rLPgcI+\n3uVBgLHYFTpVVm/6Rsy0R/DeOaRkoS7frucxan24M4sHwFStduM5pS6LLyF1SZb2\nTG73G8xTAgMBAAECggEAOYAkiwSb/IMtYxhA/DPJgGrAXfa7yxGDYwAr2LvMStqg\nT2SQwztALuRtM9Y+a59yChyCPFAY2RUrbwIcSjswYffa3GyV1xH16AScUowuhxma\nx3IZH/rJ1QL0sdJ3X+nJLKcHph5JcXripEVDdC80+fi/7vqUQCcieG9c2s2qlf3q\nvZ7ezwma3/EJSUnaAoN4/cTbs39nLS2qN0x0SvGZKDvbDHs4JGa9On7qlp/NvLgu\nHoTHrffCrfK+EWRTt89Z2w/ckswbPeEMQ8eWJLYNILTnM+Lcv7g9nP8l8SD0wWi6\nPEoqf0uT/WKbbC8GtVD/Oq/Bhny9eGxeFJvTIlDEgQKBgQDLXi6So2ast++zebTg\neam1VfI8/7pBgmb5Qct2M3WmppPtaLKnW/AGfEPGLoxeefE7EfpSo0oxv5KKbrtB\nSGKU4yxsrpoJ2xZiLOvWhFL5qcpIUZqfZSXPN/mcEPaxZJ0zHg+9PMMnHwx5X8S8\nBkhbHFLL+PFFiZM+wp91eZVLwQKBgQDHqJoAUue2LjAaKTLzIcCbb2uQJAzzFIsJ\nYAwSBXEnQuN8IYaNerEwvTn2s+xO+WAMwGGgObxMN8tPo4ulLw9dK3mYWl0V44g3\n0SwtC6OZJBw0eelitzs+tAlBF3KTSzVIQfe0B9UFR98SyjArA97NdwiTL1CTUWV8\nChBt6UZtEwKBgF3fNGo1iJBTOw7CMA6puf9dE7q6ZBQXCEcn6q295SGupHuip0x/\nMJUdyP7yv5JggUw96Sk5/GZoQlEp+b+RlQeasQfdtHa2LWfVymqzm8VobVniaRgI\nTWKQOOSkI+sQQUu2JZe5M2+cclqYLSyJTd7YfRNv7palgVUn6wkDvTlBAoGAQLRk\nTEyR6VmonyHQ8Dh1CiqeylTUmYaD1KL65nA7DoU/4f+fcoRbnjcE7O28XI+20Asc\n2Gc9ndnLGuEepYbNzN0FCBno5uoZQDWawnJuL3gjZ+JGf4ZwPc7s3NpzeEa8WtF+\nLCsJny9+nMFHwPj9IMs9zS1dSJDtebhtQKGEAF8CgYBc8e18PWlhcjEw41DhUbJl\nIY613g7BMsw+aGorHFq+zq6EbiFNUi+cjawGiIGLCgYU4oF/+Oj9tzg3UKWN9B7Q\nEZxwX8QEwEjWtwXxcQbyvzrlJc02+BeSaYoECJ7O0ipfrGBahGmxEA2LkGH6WTHV\neWsOIA9/5ZCDVLSlKuUj3Q==\n-----END PRIVATE KEY-----\n",
+  "client_email": "streamlitcortamato@cortamatoesm2025-479222.iam.gserviceaccount.com",
+  "client_id": "107586915144500435272",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/streamlitcortamato%40cortamatoesm2025-479222.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

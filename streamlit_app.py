@@ -13,15 +13,14 @@ from google.oauth2.service_account import Credentials
 import json
 
 # --- Google Sheets authentication ---
-service_account_info = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
-service_account_info_dict = json.loads(service_account_info)
+SERVICE_ACCOUNT_FILE = "cortamatoesm2025-479222-4140538a9ff1.json"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(service_account_info_dict, scopes=SCOPES)
+creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 client = gspread.authorize(creds)
 
 SHEET_NAME = "CortamatoEsm2025"
