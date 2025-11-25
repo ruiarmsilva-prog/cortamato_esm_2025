@@ -13,17 +13,18 @@ from google.oauth2.service_account import Credentials
 import json
 
 # --- Google Sheets authentication ---
-service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+service_account_info = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+service_account_info_dict = json.loads(service_account_info)
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+creds = Credentials.from_service_account_info(service_account_info_dict, scopes=SCOPES)
 client = gspread.authorize(creds)
 
-SHEET_NAME = "Corta-Mato ESM"
+SHEET_NAME = "CortamatoEsm2025"
 sheet = client.open(SHEET_NAME).sheet1
 
 # --- Streamlit page config ---
