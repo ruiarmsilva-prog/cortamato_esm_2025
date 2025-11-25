@@ -5,32 +5,29 @@ import qrcode
 from io import BytesIO
 from datetime import datetime
 import os
-import json
 from PIL import Image, ImageDraw, ImageFont
 import zipfile
 import tempfile
 import gspread
 from google.oauth2.service_account import Credentials
+import json
 
+# --- Google Sheets authentication ---
 service_account_info = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+service_account_info_dict = json.loads(service_account_info)
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# Converte a string para dicionário Python
-import json
-service_account_info_dict = json.loads(service_account_info)
-
 creds = Credentials.from_service_account_info(service_account_info_dict, scopes=SCOPES)
 client = gspread.authorize(creds)
 
-# Nome da Sheet
 SHEET_NAME = "Corta-Mato ESM"
 sheet = client.open(SHEET_NAME).sheet1
 
-# --- Configuração Streamlit ---
+# --- Streamlit page config ---
 st.set_page_config(page_title="Corta-Mato ESM", layout="wide")
 
 DATA_FILE = "data/inscricoes.csv"  # backup local opcional
@@ -146,7 +143,6 @@ df = load_data()
 
 # --- Google Sheets funções ---
 def load_inscricoes():
-    # Lê todos os dados da Sheet
     records = sheet.get_all_records()
     if not records:
         return pd.DataFrame(columns=[
@@ -154,7 +150,6 @@ def load_inscricoes():
             "Escalão", "Tempo", "QR", "Classificação", "Hora"
         ])
     df_insc = pd.DataFrame(records)
-    # Garantir colunas
     for col in ["Classificação", "Hora", "Tempo", "QR"]:
         if col not in df_insc.columns:
             df_insc[col] = ""
@@ -181,7 +176,7 @@ def update_inscricao_sheet(processo, col_name, value):
         st.error(f"Coluna {col_name} não existe.")
         return
     try:
-        row_idx = df_insc.index[df_insc["Processo"] == processo][0] + 2  # +2 por cabeçalho e base 1
+        row_idx = df_insc.index[df_insc["Processo"] == processo][0] + 2
         col_idx = df_insc.columns.get_loc(col_name) + 1
         sheet.update_cell(row_idx, col_idx, value)
     except IndexError:
@@ -209,8 +204,10 @@ if menu == "Nova Inscrição":
                     st.markdown(f"**Género:** {dados['género']}")
                     st.markdown(f"**Escalão:** {escalão}")
 
+                # --- Ler inscritos diretamente do Google Sheets ---
                 inscritos = load_inscricoes()
-                if processo in inscritos["Processo"].values:
+
+                if processo in inscritos["Processo"].astype(str).values:
                     st.warning("⚠️ Este aluno já está inscrito.")
                 else:
                     if st.button("✅ Confirmar inscrição"):
@@ -221,7 +218,8 @@ if menu == "Nova Inscrição":
                         with open(qr_path, "wb") as f:
                             f.write(dorsal_bytes)
 
-                        add_inscricao_sheet({
+                        # Adicionar inscrição diretamente no Google Sheets
+                        novo_reg = {
                             "Processo": processo,
                             "Nome": dados["nome"],
                             "Data nascimento": dados["data_nascimento"].strftime("%Y-%m-%d"),
@@ -232,7 +230,9 @@ if menu == "Nova Inscrição":
                             "QR": qr_path,
                             "Classificação": "",
                             "Hora": ""
-                        })
+                        }
+                        add_inscricao_sheet(novo_reg)
+
                         st.success(f"✅ {dados['nome']} inscrito com sucesso!")
                         st.image(dorsal_bytes, width=300)
 
@@ -242,12 +242,12 @@ if menu == "Nova Inscrição":
 # --- Menu: Lista de Inscritos ---
 elif menu == "Lista de Inscritos":
     st.subheader("📋 Lista de Inscrições")
-    inscritos = load_inscricoes()
+    inscritos = load_inscricoes()  # ler diretamente do Google Sheets
+
     processo = st.text_input("🔍 Pesquisar por número de processo", key="busca_lista")
     if processo:
         try:
-            processo = int(processo)
-            aluno = inscritos[inscritos["Processo"] == str(processo)]
+            aluno = inscritos[inscritos["Processo"].astype(str) == str(processo)]
             if not aluno.empty:
                 dados = aluno.iloc[0]
                 st.success(f"✅ Aluno encontrado: {dados['Nome']}")
@@ -260,9 +260,12 @@ elif menu == "Lista de Inscritos":
                     st.image(dados["QR"], caption=f"Dorsal de {dados['Nome']}", width=200)
 
                 if acesso_admin and st.button("❌ Eliminar inscrição"):
-                    inscritos = inscritos[inscritos["Processo"] != str(processo)]
-                    inscritos.to_csv(DATA_FILE, index=False)
+                    # remover do Google Sheets
+                    inscritos = inscritos[inscritos["Processo"].astype(str) != str(processo)]
+                    sheet.clear()
+                    sheet.update([inscritos.columns.tolist()] + inscritos.values.tolist())
                     st.warning(f"Inscrição de {dados['Nome']} eliminada.")
+
             else:
                 st.error("❌ Processo não encontrado.")
         except ValueError:
@@ -275,8 +278,9 @@ elif menu == "Lista de Inscritos":
 # --- Menu: Lista de Inscritos (admin) ---
 elif menu == "Lista de Inscritos (admin)":
     st.subheader("📋 Lista de Inscrições (Admin)")
-    inscritos = load_inscricoes()
+    inscritos = load_inscricoes()  # ler do Google Sheets
     st.dataframe(inscritos.drop(columns=["Tempo", "QR"], errors="ignore"))
+
     csv = inscritos.to_csv(index=False).encode('utf-8')
     st.download_button("⬇️ Exportar CSV", csv, "inscricoes.csv", "text/csv")
 
@@ -284,8 +288,7 @@ elif menu == "Lista de Inscritos (admin)":
     processo = st.text_input("🔍 Eliminar inscrição por número de processo", key="elim_admin")
     if processo:
         try:
-            processo = int(processo)
-            aluno = inscritos[inscritos["Processo"] == str(processo)]
+            aluno = inscritos[inscritos["Processo"].astype(str) == str(processo)]
             if not aluno.empty:
                 dados = aluno.iloc[0]
                 st.success(f"✅ Aluno encontrado: {dados['Nome']}")
@@ -294,8 +297,9 @@ elif menu == "Lista de Inscritos (admin)":
                 st.write(f"🎽 Escalão: {dados['Escalão']}")
                 st.write(f"👤 Sexo: {dados['Género']}")
                 if st.button("❌ Confirmar eliminação", key=f"elim_{processo}"):
-                    inscritos = inscritos[inscritos["Processo"] != str(processo)]
-                    inscritos.to_csv(DATA_FILE, index=False)
+                    inscritos = inscritos[inscritos["Processo"].astype(str) != str(processo)]
+                    sheet.clear()
+                    sheet.update([inscritos.columns.tolist()] + inscritos.values.tolist())
                     st.warning(f"Inscrição de {dados['Nome']} eliminada.")
             else:
                 st.error("❌ Processo não encontrado.")
@@ -304,11 +308,8 @@ elif menu == "Lista de Inscritos (admin)":
 
     # Apagar todas inscrições
     if st.button("🧹 Apagar todas as inscrições"):
-        if os.path.exists(DATA_FILE):
-            os.remove(DATA_FILE)
-            st.success("✅ Todas as inscrições foram apagadas.")
-        else:
-            st.info("ℹ️ Nenhuma inscrição encontrada.")
+        sheet.clear()
+        st.success("✅ Todas as inscrições foram apagadas.")
 
     # Download ZIP dos dorsais
     if st.button("⬇️ Download dos dorsais (ZIP)"):
@@ -322,10 +323,11 @@ elif menu == "Lista de Inscritos (admin)":
         with open(zip_path, "rb") as f:
             st.download_button("📦 Clique para descarregar", f.read(), file_name="dorsais.zip")
 
+
 # --- Menu: Chegadas ---
 elif menu == "Chegadas":
     st.subheader("🏁 Registo de Chegadas")
-    inscritos = load_inscricoes()
+    inscritos = load_inscricoes()  # ler do Google Sheets
 
     params = st.experimental_get_query_params()
     chegada = params.get("chegada", [None])[0]
@@ -333,7 +335,7 @@ elif menu == "Chegadas":
     if chegada:
         try:
             processo = str(int(chegada))
-            aluno = inscritos[inscritos["Processo"] == processo]
+            aluno = inscritos[inscritos["Processo"].astype(str) == processo]
             if aluno.empty:
                 st.error("❌ Número de processo não encontrado.")
             else:
@@ -345,9 +347,13 @@ elif menu == "Chegadas":
                 else:
                     posicao = inscritos[inscritos["Classificação"] != ""].shape[0] + 1
                     hora_agora = datetime.now().strftime("%H:%M:%S")
-                    inscritos.loc[inscritos["Processo"] == processo, "Classificação"] = str(posicao)
-                    inscritos.loc[inscritos["Processo"] == processo, "Hora"] = hora_agora
-                    inscritos.to_csv(DATA_FILE, index=False)
+                    inscritos.loc[inscritos["Processo"].astype(str) == processo, "Classificação"] = str(posicao)
+                    inscritos.loc[inscritos["Processo"].astype(str) == processo, "Hora"] = hora_agora
+
+                    # Atualizar Google Sheets
+                    sheet.clear()
+                    sheet.update([inscritos.columns.tolist()] + inscritos.values.tolist())
+
                     st.success(f"🏁 {nome} classificado em {posicao}º lugar!")
                     st.info(f"⏱ Hora de chegada: {hora_agora}")
         except ValueError:
@@ -366,13 +372,14 @@ elif menu == "Chegadas":
         classificados = classificados.sort_values("Classificação")
     st.dataframe(classificados.drop(columns=["QR", "Tempo"], errors="ignore"))
 
+
 # --- Menu: Classificações ---
 elif menu == "Classificações":
     if not acesso_admin:
         st.warning("🔒 Apenas disponível para administradores.")
         st.stop()
     st.subheader("🏁 Classificações por Escalão e Género")
-    inscritos = load_inscricoes()
+    inscritos = load_inscricoes()  # ler do Google Sheets
     esc = st.selectbox("Escolher escalão", sorted(inscritos["Escalão"].unique()))
     filtro = inscritos[inscritos["Escalão"] == esc]
     st.write(f"Inscritos no escalão {esc}:")
